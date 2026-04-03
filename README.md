@@ -5,13 +5,13 @@
             ↓ (HTTP / WebSocket)
 [ NestJS (Backend API + Services) ]
             ↓
-[ PostgreSQL (Database) ]
+[ Supabase Postgres (Database) ]
 
 👉 Separation is key:
 
 Next.js → UI only
 NestJS → all business logic
-PostgreSQL → data
+Supabase Postgres → data
 🧩 Layered breakdown
 ##Frontend — Next.js
 
@@ -98,7 +98,7 @@ changes
 
 👉 Makes your system “professional”
 
-#🗄️ Database — PostgreSQL
+#🗄️ Database — Supabase Postgres
 Core tables
 users
 requests
@@ -142,17 +142,25 @@ NestJS Controller
     ↓
 Service (business logic)
     ↓
-Database (PostgreSQL)
+Database (Supabase Postgres)
 Real-time flow
 NestJS Gateway (WebSocket)
         ↑ ↓
 Frontend (live updates)
 🚀 Deployment architecture
 [ Next.js ] → Vercel / Netlify
-[ NestJS ] → AWS / Railway / Render (Docker)
-[ PostgreSQL ] → Supabase / RDS / Neon
+[ NestJS ] → AWS / Railway / Render
+[ Supabase Postgres ] → Supabase
 🔐 Security layer (don’t skip)
 JWT + refresh tokens
 Role guards (NestJS)
 Input validation (DTOs)
 Rate limiting
+
+## Supabase Setup
+
+1. Create a Supabase project.
+2. Open `Project Settings -> Database` and copy the connection string.
+3. Put the pooled connection string into `backend/.env` as `DATABASE_URL`.
+4. Optionally keep the direct connection string in `backend/.env.example` as `DIRECT_URL` for Prisma schema pushes and migrations.
+5. Run `npm run db:push` to sync the Prisma schema to Supabase.
