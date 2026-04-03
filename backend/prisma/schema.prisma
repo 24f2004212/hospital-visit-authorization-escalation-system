@@ -1,0 +1,78 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(DOCTOR)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  visitRequests  VisitRequest[] @relation("DoctorRequests")
+  escalationLogs EscalationLog[]
+}
+
+enum Role {
+  ADMIN
+  DOCTOR
+  RECEPTIONIST
+}
+
+model Patient {
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  mrn       String   @unique // Medical Record Number
+  dob       DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  visits    VisitRequest[]
+}
+
+model VisitRequest {
+  id            String   @id @default(uuid())
+  patientId     String
+  doctorId      String
+  status        VisitStatus @default(PENDING)
+  reason        String
+  priority      Priority  @default(NORMAL)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  patient       Patient   @relation(fields: [patientId], references: [id])
+  doctor        User      @relation("DoctorRequests", fields: [doctorId], references: [id])
+  escalations   EscalationLog[]
+}
+
+enum VisitStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ESCALATED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  URGENT
+  CRITICAL
+}
+
+model EscalationLog {
+  id             String   @id @default(uuid())
+  visitRequestId String
+  escalatedById  String?
+  reason         String
+  createdAt      DateTime @default(now())
+
+  visitRequest   VisitRequest @relation(fields: [visitRequestId], references: [id])
+  escalatedBy    User?        @relation(fields: [escalatedById], references: [id])
+}
