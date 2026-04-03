@@ -7,72 +7,93 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  role      Role     @default(DOCTOR)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  visitRequests  VisitRequest[] @relation("DoctorRequests")
-  escalationLogs EscalationLog[]
-}
-
 enum Role {
+  STUDENT
+  WARDEN
+  GUARD
+  PROCTOR
+  PARENT
   ADMIN
-  DOCTOR
-  RECEPTIONIST
-}
-
-model Patient {
-  id        String   @id @default(uuid())
-  firstName String
-  lastName  String
-  mrn       String   @unique // Medical Record Number
-  dob       DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  visits    VisitRequest[]
-}
-
-model VisitRequest {
-  id            String   @id @default(uuid())
-  patientId     String
-  doctorId      String
-  status        VisitStatus @default(PENDING)
-  reason        String
-  priority      Priority  @default(NORMAL)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  patient       Patient   @relation(fields: [patientId], references: [id])
-  doctor        User      @relation("DoctorRequests", fields: [doctorId], references: [id])
-  escalations   EscalationLog[]
 }
 
 enum VisitStatus {
   PENDING
   APPROVED
   REJECTED
+  ACTIVE
+  COMPLETED
   ESCALATED
 }
 
-enum Priority {
-  LOW
+enum Urgency {
   NORMAL
-  URGENT
-  CRITICAL
+  EMERGENCY
+}
+
+enum EscalationType {
+  DELAYED_APPROVAL
+  EMERGENCY_ALERT
+  OVERDUE_RETURN
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String
+  name        String
+  role        Role     @default(STUDENT)
+  phoneNumber String?
+  parentEmail String? // For students: parent contact
+  parentPhone String? // For students: parent contact
+  roomNumber  String? // For students: hostel room
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  requestsMade   VisitRequest[] @relation("StudentRequests")
+  requestsApprov VisitRequest[] @relation("WardenApprovals")
+  guardAssigns   VisitRequest[] @relation("GuardAssignments")
+  feedbacks      Feedback[]
+}
+
+model VisitRequest {
+  id            String      @id @default(uuid())
+  studentId     String
+  wardenId      String?
+  guardId       String?
+  status        VisitStatus @default(PENDING)
+  reason        String
+  urgency       Urgency     @default(NORMAL)
+  departureTime DateTime?
+  returnTime    DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  student User  @relation("StudentRequests", fields: [studentId], references: [id])
+  warden  User? @relation("WardenApprovals", fields: [wardenId], references: [id])
+  guard   User? @relation("GuardAssignments", fields: [guardId], references: [id])
+
+  feedbacks   Feedback[]
+  escalations EscalationLog[]
+}
+
+model Feedback {
+  id             String   @id @default(uuid())
+  visitRequestId String
+  studentId      String
+  rating         Int // e.g., 1 to 5
+  comments       String?
+  createdAt      DateTime @default(now())
+
+  visitRequest VisitRequest @relation(fields: [visitRequestId], references: [id])
+  student      User         @relation(fields: [studentId], references: [id])
 }
 
 model EscalationLog {
-  id             String   @id @default(uuid())
+  id             String         @id @default(uuid())
   visitRequestId String
-  escalatedById  String?
-  reason         String
-  createdAt      DateTime @default(now())
+  type           EscalationType
+  acknowledged   Boolean        @default(false)
+  createdAt      DateTime       @default(now())
 
-  visitRequest   VisitRequest @relation(fields: [visitRequestId], references: [id])
-  escalatedBy    User?        @relation(fields: [escalatedById], references: [id])
+  visitRequest VisitRequest @relation(fields: [visitRequestId], references: [id])
 }
