@@ -17,6 +17,7 @@ model User {
   phoneNumber    String?
   parentEmail    String?   
   parentPhone    String?   
+  proctorEmail   String?   
   roomNumber     String?   
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -34,7 +35,14 @@ model VisitRequest {
   guardId        String?
   status         String      @default("PENDING") // PENDING, APPROVED, REJECTED, ACTIVE, COMPLETED, ESCALATED
   reason         String
+  description    String?     
   urgency        String      @default("NORMAL") // NORMAL, EMERGENCY
+  preferredDate  String?     
+  preferredTime  String?     
+  hospitalName   String?     
+  proctorEmail   String?     
+  parentEmail    String?     
+  parentPhone    String?     
   departureTime  DateTime?
   returnTime     DateTime?
   createdAt      DateTime    @default(now())

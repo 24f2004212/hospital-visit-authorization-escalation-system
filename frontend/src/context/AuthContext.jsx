@@ -24,7 +24,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   // Register a new user via backend API
-  const register = async ({ fullName, email, password, role, hostelBlock, roomNumber, contactNumber }) => {
+  const register = async ({ fullName, email, password, role, hostelBlock, roomNumber, contactNumber, proctorEmail, parentEmail, parentPhone }) => {
     try {
       const res = await api.post('/auth/register', {
         fullName,
@@ -34,6 +34,9 @@ export function AuthProvider({ children }) {
         hostelBlock: hostelBlock || '',
         roomNumber: roomNumber || '',
         contactNumber: contactNumber || '',
+        proctorEmail: proctorEmail || '',
+        parentEmail: parentEmail || '',
+        parentPhone: parentPhone || '',
       });
 
       const { access_token, user: userData } = res.data;

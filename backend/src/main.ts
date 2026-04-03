@@ -23,6 +23,12 @@ async function bootstrap() {
     credentials: true,
   });
 
+  const fs = require('fs');
+  app.use((err: any, req: any, res: any, next: any) => {
+    fs.writeFileSync('h:/solveathon/hospital-visit-authorization-escalation-system/global-err.log', err.stack || err.message);
+    next(err);
+  });
+
   app.setGlobalPrefix('api');
 
   await app.listen(process.env.PORT ?? 3000);
