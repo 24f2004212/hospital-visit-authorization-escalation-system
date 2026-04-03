@@ -13,7 +13,7 @@ Next.js → UI only
 NestJS → all business logic
 PostgreSQL → data
 🧩 Layered breakdown
-##1️⃣ Frontend — Next.js
+##Frontend — Next.js
 
 Role: UI + user interaction
 
