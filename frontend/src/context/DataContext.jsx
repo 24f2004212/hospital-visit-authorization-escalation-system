@@ -4,6 +4,8 @@ import { useAuth } from './AuthContext';
 import api from '@/utils/api';
 
 const DataContext = createContext(null);
+const APPROVAL_ESCALATION_MINUTES = 30;
+const APPROVAL_ESCALATION_MS = APPROVAL_ESCALATION_MINUTES * 60 * 1000;
 
 export function DataProvider({ children }) {
   const { user } = useAuth();
@@ -43,6 +45,47 @@ export function DataProvider({ children }) {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const autoEscalateOverduePendingRequests = useCallback(async () => {
+    if (!user || dataLoading) return;
+
+    const now = Date.now();
+    const overduePendingRequests = requests.filter((request) => {
+      if (request.status !== 'pending' || request.escalated) return false;
+
+      const createdAtMs = Date.parse(request.createdAt);
+      if (Number.isNaN(createdAtMs)) return false;
+
+      return now - createdAtMs >= APPROVAL_ESCALATION_MS;
+    });
+
+    if (overduePendingRequests.length === 0) return;
+
+    const updatedById = new Map();
+    await Promise.all(
+      overduePendingRequests.map(async (request) => {
+        try {
+          const res = await api.patch(`/requests/${request.id}/escalate`);
+          updatedById.set(request.id, res.data);
+        } catch (err) {
+          console.error(`Failed to auto-escalate request ${request.id}:`, err);
+        }
+      }),
+    );
+
+    if (updatedById.size > 0) {
+      setRequests((prev) => prev.map((request) => updatedById.get(request.id) ?? request));
+    }
+  }, [dataLoading, requests, user]);
+
+  useEffect(() => {
+    autoEscalateOverduePendingRequests();
+    const timer = setInterval(() => {
+      autoEscalateOverduePendingRequests();
+    }, 60 * 1000);
+
+    return () => clearInterval(timer);
+  }, [autoEscalateOverduePendingRequests]);
 
   // ---- Request Actions ----
   const submitRequest = useCallback(async (data) => {
