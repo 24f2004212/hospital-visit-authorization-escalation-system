@@ -1,14 +1,16 @@
+'use client';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useData } from '../context/DataContext';
+import { useRouter } from 'next/navigation';
+import { useData } from '@/context/DataContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import {
   FiAlertCircle, FiCalendar, FiClock, FiFileText,
   FiMapPin, FiSend, FiAlertTriangle, FiCheckCircle
 } from 'react-icons/fi';
 
-export default function NewRequestPage() {
+function NewRequestContent() {
   const { submitRequest } = useData();
-  const navigate = useNavigate();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState('');
@@ -58,10 +60,10 @@ export default function NewRequestPage() {
             </div>
           )}
           {success.urgency !== 'emergency' && (
-            <p className="success-msg">Your request has been sent to the warden for approval. You'll be notified once it's reviewed.</p>
+            <p className="success-msg">Your request has been sent to the warden for approval. You&apos;ll be notified once it&apos;s reviewed.</p>
           )}
           <div className="success-actions">
-            <button className="btn-primary" onClick={() => navigate('/my-requests')} style={{ width: 'auto', padding: '0.75rem 2rem' }}>
+            <button className="btn-primary" onClick={() => router.push('/my-requests')} style={{ width: 'auto', padding: '0.75rem 2rem' }}>
               View My Requests
             </button>
             <button className="btn-outline" onClick={() => { setSuccess(null); setForm({ reason: '', description: '', urgency: 'normal', preferredDate: '', preferredTime: '', hospitalName: '' }); }}>
@@ -84,7 +86,6 @@ export default function NewRequestPage() {
 
       <div className="form-card glass-card">
         <form className="request-form" onSubmit={handleSubmit}>
-          {/* Urgency Level */}
           <div className="form-group">
             <label className="form-label">Urgency Level</label>
             <div className="urgency-selector">
@@ -119,7 +120,6 @@ export default function NewRequestPage() {
             </div>
           )}
 
-          {/* Reason */}
           <div className="form-group">
             <label className="form-label" htmlFor="req-reason">Reason for Visit</label>
             <div className="input-wrapper">
@@ -141,7 +141,6 @@ export default function NewRequestPage() {
             </div>
           </div>
 
-          {/* Description */}
           <div className="form-group">
             <label className="form-label" htmlFor="req-desc">Description</label>
             <textarea
@@ -155,7 +154,6 @@ export default function NewRequestPage() {
             />
           </div>
 
-          {/* Hospital Name */}
           <div className="form-group">
             <label className="form-label" htmlFor="req-hospital">Hospital / Clinic Name (optional)</label>
             <div className="input-wrapper">
@@ -171,47 +169,29 @@ export default function NewRequestPage() {
             </div>
           </div>
 
-          {/* Date & Time */}
           <div className="form-row">
             <div className="form-group">
               <label className="form-label" htmlFor="req-date">Preferred Date</label>
               <div className="input-wrapper">
                 <span className="input-icon"><FiCalendar /></span>
-                <input
-                  id="req-date"
-                  type="date"
-                  className="form-input"
-                  value={form.preferredDate}
-                  onChange={handleChange('preferredDate')}
-                  min={new Date().toISOString().split('T')[0]}
-                  required
-                />
+                <input id="req-date" type="date" className="form-input" value={form.preferredDate} onChange={handleChange('preferredDate')} min={new Date().toISOString().split('T')[0]} required />
               </div>
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="req-time">Preferred Time</label>
               <div className="input-wrapper">
                 <span className="input-icon"><FiClock /></span>
-                <input
-                  id="req-time"
-                  type="time"
-                  className="form-input"
-                  value={form.preferredTime}
-                  onChange={handleChange('preferredTime')}
-                  required
-                />
+                <input id="req-time" type="time" className="form-input" value={form.preferredTime} onChange={handleChange('preferredTime')} required />
               </div>
             </div>
           </div>
 
-          {/* Error */}
           {error && (
             <div className="form-error">
               <FiAlertCircle size={14} /> {error}
             </div>
           )}
 
-          {/* Submit */}
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading && <span className="spinner"></span>}
             {loading ? 'Submitting...' : <><FiSend style={{ marginRight: '0.5rem' }} /> Submit Request</>}
@@ -219,5 +199,13 @@ export default function NewRequestPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function NewRequestPage() {
+  return (
+    <ProtectedRoute>
+      <NewRequestContent />
+    </ProtectedRoute>
   );
 }

@@ -1,9 +1,13 @@
+'use client';
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiShield, FiAlertCircle, FiPhone, FiHome, FiHash, FiCheckCircle } from 'react-icons/fi';
 
-export default function RegisterPage({ onSwitchToLogin }) {
-  const { register } = useAuth();
+export default function RegisterPage() {
+  const { register, user } = useAuth();
+  const router = useRouter();
   const [role, setRole] = useState('student');
   const [formData, setFormData] = useState({ fullName: '', email: '', password: '', confirmPassword: '', hostelBlock: '', roomNumber: '', contactNumber: '' });
   const [showPassword, setShowPassword] = useState(false);
@@ -11,6 +15,11 @@ export default function RegisterPage({ onSwitchToLogin }) {
   const [loading, setLoading] = useState(false);
   const adminRoles = [{ value: 'warden', label: 'Warden' }, { value: 'proctor', label: 'Proctor' }, { value: 'admin', label: 'Admin' }, { value: 'guard', label: 'Guard' }];
   const [adminRole, setAdminRole] = useState('warden');
+
+  if (user) {
+    router.replace('/dashboard');
+    return null;
+  }
 
   const handleChange = (field) => (e) => { setFormData(prev => ({ ...prev, [field]: e.target.value })); setError(''); };
 
@@ -36,6 +45,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
     setLoading(true);
     try {
       await register({ fullName: formData.fullName, email: formData.email, password: formData.password, role: role === 'admin' ? adminRole : 'student', hostelBlock: formData.hostelBlock, roomNumber: formData.roomNumber, contactNumber: formData.contactNumber });
+      router.push('/dashboard');
     } catch (err) { setError(err.message || 'Registration failed'); } finally { setLoading(false); }
   };
 
@@ -47,7 +57,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
 
       <div className="auth-card glass-card">
         <div className="auth-brand">
-          <div className="auth-brand-logo"><img src="/logo.png" alt="CareSync Logo" /></div>
+          <div className="auth-brand-logo"><FiShield size={28} color="white" /></div>
           <h1>Create Account</h1>
           <p>Join CareSync — Hospital Visit Authorization</p>
         </div>
@@ -127,7 +137,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
         </form>
 
         <div className="auth-divider">or</div>
-        <div className="auth-switch">Already have an account? <button onClick={onSwitchToLogin}>Sign In</button></div>
+        <div className="auth-switch">Already have an account? <Link href="/login">Sign In</Link></div>
       </div>
     </div>
   );

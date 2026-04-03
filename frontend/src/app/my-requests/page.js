@@ -1,8 +1,10 @@
-import { useData } from '../context/DataContext';
-import { Link } from 'react-router-dom';
+'use client';
+import { useData } from '@/context/DataContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import Link from 'next/link';
 import { FiClock, FiCheckCircle, FiXCircle, FiAlertTriangle, FiPlusCircle } from 'react-icons/fi';
 
-export default function MyRequestsPage() {
+function MyRequestsContent() {
   const { myRequests } = useData();
 
   const statusIcon = {
@@ -30,7 +32,7 @@ export default function MyRequestsPage() {
           <h1 className="page-title">📋 My Requests</h1>
           <p className="page-subtitle">View and track all your hospital visit requests.</p>
         </div>
-        <Link to="/new-request" className="btn-primary" style={{ width: 'auto', marginTop: 0, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem' }}>
+        <Link href="/new-request" className="btn-primary" style={{ width: 'auto', marginTop: 0, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem' }}>
           <FiPlusCircle /> New Request
         </Link>
       </div>
@@ -41,7 +43,7 @@ export default function MyRequestsPage() {
             <div className="empty-state-icon">📭</div>
             <h3>No requests yet</h3>
             <p>Submit your first hospital visit request to get started.</p>
-            <Link to="/new-request" className="btn-outline" style={{ marginTop: '1rem' }}>
+            <Link href="/new-request" className="btn-outline" style={{ marginTop: '1rem' }}>
               <FiPlusCircle /> Create Request
             </Link>
           </div>
@@ -67,9 +69,7 @@ export default function MyRequestsPage() {
                 <p className="request-desc">{req.description}</p>
 
                 <div className="request-card-meta">
-                  {req.hospitalName && (
-                    <span>🏥 {req.hospitalName}</span>
-                  )}
+                  {req.hospitalName && <span>🏥 {req.hospitalName}</span>}
                   <span>📅 {new Date(req.preferredDate).toLocaleDateString()} at {req.preferredTime}</span>
                   <span>🕐 Submitted {new Date(req.createdAt).toLocaleString()}</span>
                 </div>
@@ -120,7 +120,7 @@ export default function MyRequestsPage() {
                 )}
 
                 {req.status === 'completed' && !req.feedbackGiven && (
-                  <Link to="/feedback" className="btn-outline" style={{ marginTop: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Link href="/feedback" className="btn-outline" style={{ marginTop: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                     ⭐ Give Feedback
                   </Link>
                 )}
@@ -130,5 +130,13 @@ export default function MyRequestsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function MyRequestsPage() {
+  return (
+    <ProtectedRoute>
+      <MyRequestsContent />
+    </ProtectedRoute>
   );
 }

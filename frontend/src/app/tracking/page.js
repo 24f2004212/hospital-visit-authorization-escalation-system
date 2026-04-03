@@ -1,10 +1,12 @@
-import { useAuth } from '../context/AuthContext';
-import { useData } from '../context/DataContext';
-import { FiMapPin, FiUser, FiClock } from 'react-icons/fi';
+'use client';
+import { useAuth } from '@/context/AuthContext';
+import { useData } from '@/context/DataContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { FiUser } from 'react-icons/fi';
 
-export default function TrackingPage() {
+function TrackingContent() {
   const { user } = useAuth();
-  const { requests, activeVisits, guards, updateTrackingStatus, myRequests } = useData();
+  const { requests, guards, updateTrackingStatus, myRequests } = useData();
   const isAdmin = ['admin', 'warden', 'proctor', 'guard'].includes(user?.role);
 
   const trackingSteps = ['preparing', 'departed', 'at_hospital', 'returning', 'completed'];
@@ -49,7 +51,6 @@ export default function TrackingPage() {
         </div>
       </div>
 
-      {/* Active Visits */}
       {visitsToShow.length === 0 ? (
         <div className="section-card glass-card">
           <div className="empty-state">
@@ -77,7 +78,6 @@ export default function TrackingPage() {
                 </span>
               </div>
 
-              {/* Student Info */}
               {isAdmin && (
                 <div className="tracking-card-student">
                   <FiUser size={14} />
@@ -92,7 +92,6 @@ export default function TrackingPage() {
                 <span>💂 Guard: <strong>{getGuardName(visit.assignedGuard)}</strong></span>
               </div>
 
-              {/* Progress Bar */}
               <div className="tracking-progress-bar">
                 {trackingSteps.map((step, idx) => {
                   const currentIdx = trackingSteps.indexOf(visit.trackingStatus);
@@ -112,7 +111,6 @@ export default function TrackingPage() {
                 })}
               </div>
 
-              {/* Update Button (Admin/Guard only) */}
               {isAdmin && getNextStatus(visit.trackingStatus) && (
                 <button
                   className="btn-update-status"
@@ -132,7 +130,6 @@ export default function TrackingPage() {
         </div>
       )}
 
-      {/* Completed Visits */}
       {completedVisits.length > 0 && (
         <div className="section-card glass-card" style={{ marginTop: '2rem' }}>
           <div className="section-card-header">
@@ -165,5 +162,13 @@ export default function TrackingPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TrackingPage() {
+  return (
+    <ProtectedRoute>
+      <TrackingContent />
+    </ProtectedRoute>
   );
 }

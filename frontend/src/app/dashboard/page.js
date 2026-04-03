@@ -1,12 +1,14 @@
-import { useAuth } from '../context/AuthContext';
-import { useData } from '../context/DataContext';
-import { Link } from 'react-router-dom';
+'use client';
+import { useAuth } from '@/context/AuthContext';
+import { useData } from '@/context/DataContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import Link from 'next/link';
 import {
   FiPlusCircle, FiClock, FiCheckCircle, FiXCircle,
   FiMapPin, FiAlertTriangle, FiUsers, FiActivity, FiStar
 } from 'react-icons/fi';
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { user } = useAuth();
   const { stats, myRequests, pendingRequests, activeVisits } = useData();
   const isAdmin = ['admin', 'warden', 'proctor', 'guard'].includes(user?.role);
@@ -28,15 +30,12 @@ export default function DashboardPage() {
   ];
 
   const currentStats = isAdmin ? adminStats : studentStats;
-
   const urgencyColors = { normal: 'var(--primary-400)', urgent: 'var(--warning-500)', emergency: 'var(--error-500)' };
   const statusColors = { pending: 'var(--warning-500)', approved: 'var(--success-500)', rejected: 'var(--error-500)', completed: '#a855f7' };
-
   const recentItems = isAdmin ? pendingRequests.slice(0, 5) : myRequests.slice(0, 5);
 
   return (
     <div className="page-container">
-      {/* Page Header */}
       <div className="page-header">
         <div>
           <h1 className="page-title">
@@ -48,13 +47,12 @@ export default function DashboardPage() {
           </p>
         </div>
         {!isAdmin && (
-          <Link to="/new-request" className="btn-primary" style={{ width: 'auto', marginTop: 0, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem' }}>
+          <Link href="/new-request" className="btn-primary" style={{ width: 'auto', marginTop: 0, display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem' }}>
             <FiPlusCircle /> New Request
           </Link>
         )}
       </div>
 
-      {/* Stats Grid */}
       <div className="stats-grid">
         {currentStats.map((stat, i) => (
           <div className="stat-card glass-card" key={i} style={{ animationDelay: `${i * 0.08}s` }}>
@@ -69,11 +67,10 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Recent Activity */}
       <div className="section-card glass-card">
         <div className="section-card-header">
           <h2>{isAdmin ? '⏳ Pending Approvals' : '📋 Recent Requests'}</h2>
-          <Link to={isAdmin ? '/approvals' : '/my-requests'} className="section-card-link">
+          <Link href={isAdmin ? '/approvals' : '/my-requests'} className="section-card-link">
             View All →
           </Link>
         </div>
@@ -81,7 +78,7 @@ export default function DashboardPage() {
           <div className="empty-state">
             <div className="empty-state-icon">📭</div>
             <p>{isAdmin ? 'No pending requests' : 'No requests yet'}</p>
-            {!isAdmin && <Link to="/new-request" className="btn-outline">Submit your first request</Link>}
+            {!isAdmin && <Link href="/new-request" className="btn-outline">Submit your first request</Link>}
           </div>
         ) : (
           <div className="table-wrapper">
@@ -128,12 +125,11 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Active Visits for Admin */}
       {isAdmin && activeVisits.length > 0 && (
         <div className="section-card glass-card">
           <div className="section-card-header">
             <h2>🏥 Active Hospital Visits</h2>
-            <Link to="/tracking" className="section-card-link">Live Tracking →</Link>
+            <Link href="/tracking" className="section-card-link">Live Tracking →</Link>
           </div>
           <div className="active-visits-grid">
             {activeVisits.slice(0, 4).map(visit => (
@@ -152,5 +148,13 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
   );
 }

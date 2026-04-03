@@ -1,8 +1,10 @@
-import { useData } from '../context/DataContext';
-import { useAuth } from '../context/AuthContext';
-import { FiAlertTriangle, FiUser, FiClock, FiCheckCircle, FiArrowRight } from 'react-icons/fi';
+'use client';
+import { useData } from '@/context/DataContext';
+import { useAuth } from '@/context/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { FiAlertTriangle, FiUser, FiCheckCircle, FiArrowRight } from 'react-icons/fi';
 
-export default function EscalationsPage() {
+function EscalationsContent() {
   const { user } = useAuth();
   const { requests, approveRequest, availableGuards } = useData();
   const escalatedRequests = requests.filter(r => r.escalated);
@@ -33,7 +35,6 @@ export default function EscalationsPage() {
         )}
       </div>
 
-      {/* Escalation Flow Info */}
       <div className="section-card glass-card" style={{ marginBottom: '1.5rem' }}>
         <h3 style={{ marginBottom: '0.75rem', color: 'var(--neutral-200)' }}>⚡ Auto-Escalation Flow</h3>
         <div className="escalation-flow">
@@ -59,7 +60,6 @@ export default function EscalationsPage() {
         </div>
       </div>
 
-      {/* Pending Escalations */}
       {pendingEscalated.length > 0 && (
         <>
           <h2 className="section-title">⚠️ Requires Immediate Attention</h2>
@@ -110,7 +110,6 @@ export default function EscalationsPage() {
         </>
       )}
 
-      {/* Resolved Escalations */}
       {resolvedEscalated.length > 0 && (
         <>
           <h2 className="section-title" style={{ marginTop: '2rem' }}>✅ Resolved Escalations</h2>
@@ -160,5 +159,13 @@ export default function EscalationsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function EscalationsPage() {
+  return (
+    <ProtectedRoute adminOnly>
+      <EscalationsContent />
+    </ProtectedRoute>
   );
 }

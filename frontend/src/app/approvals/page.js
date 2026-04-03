@@ -1,9 +1,11 @@
+'use client';
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useData } from '../context/DataContext';
-import { FiCheckCircle, FiXCircle, FiAlertTriangle, FiUser, FiShield } from 'react-icons/fi';
+import { useAuth } from '@/context/AuthContext';
+import { useData } from '@/context/DataContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { FiCheckCircle, FiXCircle, FiAlertTriangle, FiUser } from 'react-icons/fi';
 
-export default function ApprovalsPage() {
+function ApprovalsContent() {
   const { user } = useAuth();
   const { pendingRequests, requests, availableGuards, approveRequest, rejectRequest, escalateRequest } = useData();
   const [rejectingId, setRejectingId] = useState(null);
@@ -34,10 +36,6 @@ export default function ApprovalsPage() {
     setRejectReason('');
   };
 
-  const handleEscalate = (reqId) => {
-    escalateRequest(reqId);
-  };
-
   const timeSince = (dateStr) => {
     const mins = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
     if (mins < 60) return `${mins}m ago`;
@@ -54,7 +52,6 @@ export default function ApprovalsPage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="tabs">
         {[
           { key: 'pending', label: 'Pending', count: pendingRequests.length },
@@ -71,7 +68,6 @@ export default function ApprovalsPage() {
         ))}
       </div>
 
-      {/* Requests */}
       {filteredRequests.length === 0 ? (
         <div className="section-card glass-card">
           <div className="empty-state">
@@ -94,7 +90,6 @@ export default function ApprovalsPage() {
               </div>
 
               <div className="request-card-body">
-                {/* Student Info */}
                 <div className="student-info-row">
                   <div className="student-avatar-sm"><FiUser /></div>
                   <div>
@@ -120,7 +115,6 @@ export default function ApprovalsPage() {
                   </div>
                 )}
 
-                {/* Approval Actions */}
                 {tab === 'pending' && (
                   <div className="approval-actions">
                     {approvingId === req.id ? (
@@ -164,7 +158,7 @@ export default function ApprovalsPage() {
                         <button className="btn-reject" onClick={() => setRejectingId(req.id)}>
                           <FiXCircle /> Reject
                         </button>
-                        <button className="btn-escalate" onClick={() => handleEscalate(req.id)}>
+                        <button className="btn-escalate" onClick={() => escalateRequest(req.id)}>
                           <FiAlertTriangle /> Escalate
                         </button>
                       </div>
@@ -172,7 +166,6 @@ export default function ApprovalsPage() {
                   </div>
                 )}
 
-                {/* Approved Info */}
                 {tab === 'approved' && (
                   <div className="request-card-approval">
                     <FiCheckCircle style={{ color: 'var(--success-500)' }} />
@@ -180,7 +173,6 @@ export default function ApprovalsPage() {
                   </div>
                 )}
 
-                {/* Rejected Info */}
                 {tab === 'rejected' && (
                   <div className="request-card-rejection">
                     <FiXCircle style={{ color: 'var(--error-500)' }} />
@@ -193,5 +185,13 @@ export default function ApprovalsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ApprovalsPage() {
+  return (
+    <ProtectedRoute adminOnly>
+      <ApprovalsContent />
+    </ProtectedRoute>
   );
 }

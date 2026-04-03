@@ -1,20 +1,20 @@
+'use client';
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useData } from '../context/DataContext';
-import { FiStar, FiSend, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
+import { useAuth } from '@/context/AuthContext';
+import { useData } from '@/context/DataContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { FiStar, FiSend, FiAlertCircle } from 'react-icons/fi';
 
-export default function FeedbackPage() {
+function FeedbackContent() {
   const { user } = useAuth();
   const { myRequests, requests, feedback, submitFeedback } = useData();
   const isAdmin = ['admin', 'warden', 'proctor', 'guard'].includes(user?.role);
 
-  // Students: show form & their feedbacks. Admins: show all feedbacks.
   const completedRequests = isAdmin
     ? requests.filter(r => r.status === 'completed')
     : myRequests.filter(r => r.status === 'completed');
 
   const givenFeedbackIds = feedback.map(f => f.requestId);
-
   const pendingFeedback = completedRequests.filter(r => !givenFeedbackIds.includes(r.id));
 
   const [selectedRequest, setSelectedRequest] = useState('');
@@ -46,7 +46,6 @@ export default function FeedbackPage() {
     setSuccess(true);
     setLoading(false);
 
-    // Reset
     setTimeout(() => {
       setSuccess(false);
       setSelectedRequest('');
@@ -70,7 +69,6 @@ export default function FeedbackPage() {
         </div>
       </div>
 
-      {/* Student Feedback Form */}
       {!isAdmin && (
         <div className="form-card glass-card" style={{ marginBottom: '2rem' }}>
           {success ? (
@@ -89,7 +87,6 @@ export default function FeedbackPage() {
                 </div>
               ) : (
                 <>
-                  {/* Select Visit */}
                   <div className="form-group">
                     <label className="form-label">Select Completed Visit</label>
                     <select className="form-select" style={{ paddingLeft: '1rem' }} value={selectedRequest} onChange={e => { setSelectedRequest(e.target.value); setError(''); }}>
@@ -100,7 +97,6 @@ export default function FeedbackPage() {
                     </select>
                   </div>
 
-                  {/* Rating */}
                   <div className="form-group">
                     <label className="form-label">Overall Rating</label>
                     <div className="rating-selector">
@@ -124,19 +120,16 @@ export default function FeedbackPage() {
                     </div>
                   </div>
 
-                  {/* Hospital Experience */}
                   <div className="form-group">
                     <label className="form-label">Hospital Experience</label>
                     <textarea className="form-textarea" placeholder="How was your experience at the hospital? Was the staff helpful?" value={hospitalExperience} onChange={e => setHospitalExperience(e.target.value)} rows={3} />
                   </div>
 
-                  {/* Guard Behavior */}
                   <div className="form-group">
                     <label className="form-label">Guard Assistance (Optional)</label>
                     <textarea className="form-textarea" placeholder="How was the guard's behavior? Were they helpful and supportive?" value={guardBehavior} onChange={e => setGuardBehavior(e.target.value)} rows={2} />
                   </div>
 
-                  {/* Suggestions */}
                   <div className="form-group">
                     <label className="form-label">Suggestions (Optional)</label>
                     <textarea className="form-textarea" placeholder="Any suggestions to improve the hospital visit process?" value={suggestions} onChange={e => setSuggestions(e.target.value)} rows={2} />
@@ -155,7 +148,6 @@ export default function FeedbackPage() {
         </div>
       )}
 
-      {/* All Feedback List */}
       {feedback.length > 0 && (
         <div className="section-card glass-card">
           <div className="section-card-header">
@@ -197,10 +189,18 @@ export default function FeedbackPage() {
           <div className="empty-state">
             <div className="empty-state-icon">📭</div>
             <h3>No feedback yet</h3>
-            <p>Students haven't submitted any feedback yet.</p>
+            <p>Students haven&apos;t submitted any feedback yet.</p>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+export default function FeedbackPage() {
+  return (
+    <ProtectedRoute>
+      <FeedbackContent />
+    </ProtectedRoute>
   );
 }

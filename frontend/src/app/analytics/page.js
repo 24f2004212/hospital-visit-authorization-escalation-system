@@ -1,17 +1,17 @@
-import { useData } from '../context/DataContext';
-import { FiActivity, FiUsers, FiCheckCircle, FiClock, FiAlertTriangle, FiStar, FiBarChart2 } from 'react-icons/fi';
+'use client';
+import { useData } from '@/context/DataContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { FiUsers, FiCheckCircle, FiClock, FiAlertTriangle, FiStar, FiBarChart2 } from 'react-icons/fi';
 
-export default function AnalyticsPage() {
+function AnalyticsContent() {
   const { requests, feedback, guards, stats } = useData();
 
-  // Urgency distribution
   const urgencyData = [
     { label: 'Normal', value: requests.filter(r => r.urgency === 'normal').length, color: 'var(--primary-400)' },
     { label: 'Urgent', value: requests.filter(r => r.urgency === 'urgent').length, color: 'var(--warning-500)' },
     { label: 'Emergency', value: requests.filter(r => r.urgency === 'emergency').length, color: 'var(--error-500)' },
   ];
 
-  // Status distribution
   const statusData = [
     { label: 'Pending', value: stats.pending, color: 'var(--warning-500)' },
     { label: 'Approved', value: stats.approved, color: 'var(--success-500)' },
@@ -19,14 +19,12 @@ export default function AnalyticsPage() {
     { label: 'Completed', value: stats.completed, color: '#a855f7' },
   ];
 
-  // Reason breakdown
   const reasonCounts = {};
   requests.forEach(r => { reasonCounts[r.reason] = (reasonCounts[r.reason] || 0) + 1; });
   const topReasons = Object.entries(reasonCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6);
 
-  // Rating distribution
   const ratingDist = [1, 2, 3, 4, 5].map(r => ({
     label: `${r}★`,
     value: feedback.filter(f => f.rating === r).length,
@@ -35,7 +33,6 @@ export default function AnalyticsPage() {
 
   const maxBarValue = (data) => Math.max(...data.map(d => d.value), 1);
 
-  // Overview stats
   const overviewStats = [
     { icon: <FiBarChart2 />, label: 'Total Requests', value: stats.totalRequests, color: 'var(--primary-400)', bg: 'rgba(0,212,170,0.1)' },
     { icon: <FiClock />, label: 'Pending', value: stats.pending, color: 'var(--warning-500)', bg: 'rgba(245,158,11,0.1)' },
@@ -56,7 +53,6 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="stats-grid">
         {overviewStats.map((s, i) => (
           <div className="stat-card glass-card" key={i} style={{ animationDelay: `${i * 0.06}s` }}>
@@ -69,9 +65,7 @@ export default function AnalyticsPage() {
         ))}
       </div>
 
-      {/* Charts Grid */}
       <div className="analytics-grid">
-        {/* Status Distribution */}
         <div className="chart-card glass-card">
           <h3>📈 Request Status</h3>
           <div className="donut-stat">
@@ -100,7 +94,6 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Urgency Distribution */}
         <div className="chart-card glass-card">
           <h3>⚡ Urgency Breakdown</h3>
           <div className="bar-chart">
@@ -117,7 +110,6 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Top Reasons */}
         <div className="chart-card glass-card">
           <h3>🏥 Top Visit Reasons</h3>
           {topReasons.length === 0 ? (
@@ -148,7 +140,6 @@ export default function AnalyticsPage() {
           )}
         </div>
 
-        {/* Rating Distribution */}
         <div className="chart-card glass-card">
           <h3>⭐ Feedback Ratings</h3>
           {feedback.length === 0 ? (
@@ -182,7 +173,6 @@ export default function AnalyticsPage() {
           )}
         </div>
 
-        {/* Guard Utilization */}
         <div className="chart-card glass-card">
           <h3>💂 Guard Utilization</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -213,7 +203,6 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Escalation Stats */}
         <div className="chart-card glass-card">
           <h3>🚨 Escalation Summary</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '0.5rem' }}>
@@ -244,5 +233,13 @@ export default function AnalyticsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AnalyticsPage() {
+  return (
+    <ProtectedRoute adminOnly>
+      <AnalyticsContent />
+    </ProtectedRoute>
   );
 }
