@@ -7,6 +7,7 @@ import {
   Param,
   UseGuards,
   Request,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RequestsService } from './requests.service';
@@ -33,15 +34,19 @@ export class RequestsController {
   @UseGuards(AuthGuard('jwt'))
   @Post()
   async create(@Request() req: any, @Body() body: any) {
-    return this.requestsService.create({
-      ...body,
-      studentId: req.user.id,
-      studentName: req.user.fullName,
-      studentEmail: req.user.email,
-      hostelBlock: req.user.hostelBlock,
-      roomNumber: req.user.roomNumber,
-      contactNumber: req.user.contactNumber,
-    });
+    try {
+      return await this.requestsService.create({
+        ...body,
+        studentId: req.user.id,
+        // Use provided body fields or default to user profile values
+        proctorEmail: body.proctorEmail || req.user.proctorEmail,
+        parentEmail: body.parentEmail || req.user.parentEmail,
+        parentPhone: body.parentPhone || req.user.parentPhone,
+      });
+    } catch (err) {
+      console.error("Create request failed:", err);
+      throw new InternalServerErrorException(err.message || String(err));
+    }
   }
 
   // Approve a request

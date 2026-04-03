@@ -36,10 +36,16 @@ export default function NewRequestPage() {
     if (!form.preferredTime) return setError('Please select a time');
 
     setLoading(true);
-    await new Promise(r => setTimeout(r, 600));
-    const req = submitRequest(form);
-    setSuccess(req);
-    setLoading(false);
+    try {
+      await new Promise(r => setTimeout(r, 600));
+      const req = await submitRequest(form);
+      setSuccess(req);
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || err.message || 'Failed to submit request');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (success) {

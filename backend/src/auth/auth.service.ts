@@ -18,6 +18,9 @@ export class AuthService {
     hostelBlock?: string;
     roomNumber?: string;
     contactNumber?: string;
+    proctorEmail?: string;
+    parentEmail?: string;
+    parentPhone?: string;
   }) {
     const existing = await this.prisma.user.findUnique({ where: { email: data.email } });
     if (existing) {
@@ -33,6 +36,9 @@ export class AuthService {
         role: (data.role?.toUpperCase() || 'STUDENT') as any,
         phoneNumber: data.contactNumber || '',
         roomNumber: data.roomNumber || '',
+        proctorEmail: data.proctorEmail || '',
+        parentEmail: data.parentEmail || '',
+        parentPhone: data.parentPhone || '',
       },
     });
 

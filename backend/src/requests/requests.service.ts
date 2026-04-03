@@ -30,15 +30,25 @@ export class RequestsService {
     preferredDate?: string;
     preferredTime?: string;
     hospitalName?: string;
+    proctorEmail?: string;
+    parentEmail?: string;
+    parentPhone?: string;
   }) {
     const isEmergency = data.urgency === 'emergency';
 
     const request = await this.prisma.visitRequest.create({
       data: {
         studentId: data.studentId,
-        reason: data.reason + (data.description ? ` — ${data.description}` : ''),
+        reason: data.reason,
+        description: data.description || '',
         urgency: data.urgency === 'emergency' ? 'EMERGENCY' : 'NORMAL',
         status: isEmergency ? 'APPROVED' : 'PENDING',
+        preferredDate: data.preferredDate || '',
+        preferredTime: data.preferredTime || '',
+        hospitalName: data.hospitalName || '',
+        proctorEmail: data.proctorEmail || '',
+        parentEmail: data.parentEmail || '',
+        parentPhone: data.parentPhone || '',
       },
       include: { student: true, warden: true, guard: true, escalations: true, feedbacks: true },
     });
@@ -206,11 +216,14 @@ export class RequestsService {
       roomNumber: r.student?.roomNumber || '',
       contactNumber: r.student?.phoneNumber || '',
       reason: r.reason,
-      description: r.reason,
+      description: r.description || '',
       urgency: r.urgency?.toLowerCase() || 'normal',
-      preferredDate: r.departureTime ? r.departureTime.toISOString().split('T')[0] : '',
-      preferredTime: '',
-      hospitalName: '',
+      preferredDate: r.preferredDate || '',
+      preferredTime: r.preferredTime || '',
+      hospitalName: r.hospitalName || '',
+      proctorEmail: r.proctorEmail || '',
+      parentEmail: r.parentEmail || '',
+      parentPhone: r.parentPhone || '',
       status: r.status?.toLowerCase() || 'pending',
       assignedGuard: r.guardId || null,
       createdAt: r.createdAt?.toISOString(),
