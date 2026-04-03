@@ -31,6 +31,16 @@
 $ npm install
 ```
 
+## Supabase database
+
+Set `DATABASE_URL` in `backend/.env` to your Supabase pooled Postgres connection string before starting the backend.
+
+Use this project command to push the Prisma schema to Supabase:
+
+```bash
+$ npm exec prisma db push
+```
+
 ## Compile and run the project
 
 ```bash
