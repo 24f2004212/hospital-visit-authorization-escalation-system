@@ -1,25 +1,11 @@
+'use client';
 import { createContext, useContext, useState, useEffect } from 'react';
-import { apiLogin, apiRegister } from '../services/api';
+import api from '@/utils/api';
 
 const AuthContext = createContext(null);
-const SESSION_KEY = 'medguard_session';
 
-function getSession() {
-  try {
-    const session = localStorage.getItem(SESSION_KEY);
-    return session ? JSON.parse(session) : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveSession(user) {
-  if (user) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(SESSION_KEY);
-  }
-}
+const SESSION_KEY = 'caresync_user';
+const TOKEN_KEY = 'caresync_token';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -27,30 +13,64 @@ export function AuthProvider({ children }) {
 
   // Restore session on mount
   useEffect(() => {
-    const session = getSession();
-    if (session) {
-      setUser(session);
+    const stored = localStorage.getItem(SESSION_KEY);
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (stored && token) {
+      try {
+        setUser(JSON.parse(stored));
+      } catch { /* ignore */ }
     }
     setLoading(false);
   }, []);
 
-  const register = async (userData) => {
-    const newUser = await apiRegister(userData);
-    setUser(newUser);
-    saveSession(newUser);
-    return newUser;
+  // Register a new user via backend API
+  const register = async ({ fullName, email, password, role, hostelBlock, roomNumber, contactNumber }) => {
+    try {
+      const res = await api.post('/auth/register', {
+        fullName,
+        email: email.toLowerCase(),
+        password,
+        role,
+        hostelBlock: hostelBlock || '',
+        roomNumber: roomNumber || '',
+        contactNumber: contactNumber || '',
+      });
+
+      const { access_token, user: userData } = res.data;
+      localStorage.setItem(TOKEN_KEY, access_token);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(userData));
+      setUser(userData);
+      return userData;
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || 'Registration failed';
+      throw new Error(message);
+    }
   };
 
+  // Login via backend API
   const login = async (email, password) => {
-    const loggedInUser = await apiLogin(email, password);
-    setUser(loggedInUser);
-    saveSession(loggedInUser);
-    return loggedInUser;
+    try {
+      const res = await api.post('/auth/login', {
+        email: email.toLowerCase(),
+        password,
+      });
+
+      const { access_token, user: userData } = res.data;
+      localStorage.setItem(TOKEN_KEY, access_token);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(userData));
+      setUser(userData);
+      return userData;
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || 'Invalid email or password';
+      throw new Error(message);
+    }
   };
 
+  // Logout
   const logout = () => {
     setUser(null);
-    saveSession(null);
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(TOKEN_KEY);
   };
 
   return (
