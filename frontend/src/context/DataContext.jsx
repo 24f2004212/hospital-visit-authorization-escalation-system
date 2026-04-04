@@ -194,7 +194,7 @@ export function DataProvider({ children }) {
 
   return (
     <DataContext.Provider value={{
-      requests, myRequests, pendingRequests, activeVisits, completedRequests,
+      requests, allRequests: requests, myRequests, pendingRequests, activeVisits, completedRequests,
       guards, availableGuards, feedback, stats, dataLoading,
       submitRequest, approveRequest, rejectRequest, escalateRequest,
       updateTrackingStatus, submitFeedback, refreshData: fetchData,

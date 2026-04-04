@@ -283,7 +283,7 @@ export class RequestsService {
       studentId: r.studentId,
       studentName: r.student?.name || '',
       studentEmail: r.student?.email || '',
-      hostelBlock: '',
+      hostelBlock: r.student?.hostelBlock || '',
       roomNumber: r.student?.roomNumber || '',
       contactNumber: r.student?.phoneNumber || '',
       reason: r.reason,
@@ -297,6 +297,8 @@ export class RequestsService {
       parentPhone: r.parentPhone || '',
       status: r.status?.toLowerCase() || 'pending',
       assignedGuard: r.guardId || null,
+      guardName: r.guard?.name || null,
+      wardenName: r.warden?.name || null,
       createdAt: r.createdAt?.toISOString(),
       updatedAt: r.updatedAt?.toISOString(),
       approvedBy: r.warden
