@@ -3,7 +3,7 @@ import { useData } from '../context/DataContext';
 import { Link } from 'react-router-dom';
 import {
   FiPlusCircle, FiClock, FiCheckCircle, FiXCircle,
-  FiMapPin, FiAlertTriangle, FiUsers, FiActivity, FiStar
+  FiMapPin, FiAlertTriangle, FiUsers, FiActivity, FiStar, FiShield
 } from 'react-icons/fi';
 
 export default function DashboardPage() {
@@ -68,6 +68,21 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* Assigned Proctor Display (Student Only) */}
+      {!isAdmin && user?.proctor && (
+        <div className="section-card glass-card" style={{ marginTop: '1.5rem', padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid var(--primary-400)' }}>
+          <div style={{ padding: '1rem', background: 'rgba(0,180,204,0.1)', borderRadius: '50%', color: 'var(--primary-400)' }}>
+            <FiShield size={24} />
+          </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Assigned Proctor</h3>
+            <p style={{ margin: '0.2rem 0 0 0', color: 'var(--neutral-400)', fontSize: '0.9rem' }}>
+              <strong>{user.proctor.name}</strong> • {user.proctor.email}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Recent Activity */}
       <div className="section-card glass-card">

@@ -19,9 +19,12 @@ model User {
   proctorEmail   String?   
   roomNumber     String?   
   hostelBlock    String?   
+  proctorId      String?
   isApproved     Boolean   @default(true)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+
+  proctor        Proctor?  @relation("StudentProctor", fields: [proctorId], references: [id])
 
   requestsMade   VisitRequest[]  @relation("StudentRequests")
   requestsApprov VisitRequest[]  @relation("WardenApprovals")
@@ -77,4 +80,15 @@ model EscalationLog {
   createdAt      DateTime       @default(now())
 
   visitRequest   VisitRequest   @relation(fields: [visitRequestId], references: [id])
+}
+
+model Proctor {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  students  User[]   @relation("StudentProctor")
 }

@@ -31,7 +31,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
   const [formData, setFormData] = useState({ 
     fullName: '', email: '', password: '', confirmPassword: '', 
     hostelBlock: '', roomNumber: '', countryCode: '+91', phoneNumber: '',
-    proctorEmail: '', parentEmail: '', parentCountryCode: '+91', parentPhone: '' 
+    parentEmail: '', parentCountryCode: '+91', parentPhone: '' 
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -74,8 +74,6 @@ export default function RegisterPage({ onSwitchToLogin }) {
       if (!formData.roomNumber.trim()) return 'Please enter your room number';
       if (!formData.parentEmail.trim()) return 'Please enter your parent\'s email';
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.parentEmail)) return 'Invalid parent email';
-      if (!formData.proctorEmail.trim()) return 'Please enter your proctor\'s email';
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.proctorEmail)) return 'Invalid proctor email';
       if (!formData.parentPhone.trim()) return 'Parent mobile number is required';
       if (formData.parentPhone.length < 5) return 'Invalid parent mobile number';
     }
@@ -101,7 +99,6 @@ export default function RegisterPage({ onSwitchToLogin }) {
         hostelBlock: formData.hostelBlock, 
         roomNumber: formData.roomNumber, 
         contactNumber: fullContactNumber,
-        proctorEmail: formData.proctorEmail,
         parentEmail: formData.parentEmail,
         parentPhone: `${formData.parentCountryCode} ${formData.parentPhone}`
       });
@@ -190,14 +187,6 @@ export default function RegisterPage({ onSwitchToLogin }) {
             <div style={{ flex: 1 }}>
               <label className="form-label">Room No.</label>
               <div className="input-wrapper"><span className="input-icon"><FiHash /></span><input type="text" className="form-input" placeholder="204" value={formData.roomNumber} onChange={handleChange('roomNumber')} required /></div>
-            </div>
-          </div>
-
-          <div className="form-group form-fields-enter">
-            <label className="form-label">Proctor Email Address</label>
-            <div className="input-wrapper">
-              <span className="input-icon"><FiMail /></span>
-              <input type="email" className="form-input" placeholder="proctor@hostel.edu" value={formData.proctorEmail} onChange={handleChange('proctorEmail')} required />
             </div>
           </div>
 

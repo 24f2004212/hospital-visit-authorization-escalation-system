@@ -66,6 +66,26 @@ async function main() {
     console.log(`✅ Guard seeded: ${guard.name} (${guard.email})`);
   }
 
+  // ── 4. Proctors ───────────────────────────────────────────
+  const proctors = [
+    { email: 'jaiakash222007@gmail.com', name: 'Jai Akash', phone: '+91 9876543006' },
+    { email: 'sarveshp2006167@gmail.com', name: 'Sarvesh P', phone: '+91 9876543007' },
+    { email: 'gharishankarvel@gmail.com', name: 'G Hari Shankar', phone: '+91 9876543008' },
+  ];
+
+  for (const p of proctors) {
+    const proctor = await prisma.proctor.upsert({
+      where: { email: p.email },
+      update: {},
+      create: {
+        email: p.email,
+        name: p.name,
+        phone: p.phone,
+      },
+    });
+    console.log(`✅ Proctor seeded: ${proctor.name} (${proctor.email})`);
+  }
+
   console.log('\n🎉 Seeding complete!');
 }
 

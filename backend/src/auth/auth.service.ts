@@ -43,6 +43,18 @@ export class AuthService {
     // Wardens and Proctors require admin approval
     const needsApproval = ['WARDEN', 'PROCTOR'].includes(normalizedRole);
 
+    let assignedProctorEmail = '';
+    let assignedProctorId = null;
+
+    if (normalizedRole === 'STUDENT') {
+      const proctors = await this.prisma.proctor.findMany();
+      if (proctors.length > 0) {
+        const randomProctor = proctors[Math.floor(Math.random() * proctors.length)];
+        assignedProctorEmail = randomProctor.email;
+        assignedProctorId = randomProctor.id;
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
     const user = await this.prisma['user'].create({
       data: {
@@ -53,11 +65,15 @@ export class AuthService {
         phoneNumber: data.contactNumber || '',
         roomNumber: data.roomNumber || '',
         hostelBlock: data.hostelBlock || '',
-        proctorEmail: data.proctorEmail || '',
+        proctorEmail: assignedProctorEmail,
+        proctorId: assignedProctorId,
         parentEmail: data.parentEmail || '',
         parentPhone: data.parentPhone || '',
         isApproved: !needsApproval,
       },
+      include: {
+        proctor: true
+      }
     });
 
     // If staff needs approval, don't issue a token
@@ -87,6 +103,11 @@ export class AuthService {
         hostelBlock: user.hostelBlock || '',
         roomNumber: user.roomNumber || '',
         contactNumber: user.phoneNumber || '',
+        proctor: user.proctor ? {
+          name: user.proctor.name,
+          email: user.proctor.email,
+          phone: user.proctor.phone
+        } : null,
       },
     };
   }
@@ -94,7 +115,10 @@ export class AuthService {
   async login(email: string, password: string) {
     const normalizedEmail = email.toLowerCase();
     console.log(`AUTH DEBUG: Attempting login for: [${normalizedEmail}]`);
-    const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+    const user = await this.prisma.user.findUnique({ 
+      where: { email: normalizedEmail },
+      include: { proctor: true }
+    });
     if (!user) {
       console.log(`AUTH DEBUG: User NOT FOUND in database: [${email}]`);
       throw new UnauthorizedException('Invalid email or password');
@@ -126,6 +150,11 @@ export class AuthService {
         hostelBlock: user.hostelBlock || '',
         roomNumber: user.roomNumber || '',
         contactNumber: user.phoneNumber || '',
+        proctor: user.proctor ? {
+          name: user.proctor.name,
+          email: user.proctor.email,
+          phone: user.proctor.phone
+        } : null,
       },
     };
   }
@@ -176,7 +205,10 @@ export class AuthService {
   }
 
   async getProfile(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({ 
+      where: { id: userId },
+      include: { proctor: true }
+    });
     if (!user) throw new UnauthorizedException('User not found');
     return {
       id: user.id,
@@ -186,6 +218,11 @@ export class AuthService {
       hostelBlock: user.hostelBlock || '',
       roomNumber: user.roomNumber || '',
       contactNumber: user.phoneNumber || '',
+      proctor: user.proctor ? {
+        name: user.proctor.name,
+        email: user.proctor.email,
+        phone: user.proctor.phone
+      } : null,
     };
   }
 
