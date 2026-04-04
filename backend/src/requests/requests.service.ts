@@ -136,9 +136,8 @@ export class RequestsService {
     const statusMap: Record<string, string> = {
       completed: 'COMPLETED',
       preparing: 'APPROVED',
-      departed: 'ACTIVE',
-      at_hospital: 'ACTIVE',
-      returning: 'ACTIVE',
+      departed: 'DEPARTED',
+      at_hospital: 'AT_HOSPITAL',
     };
     const dbStatus = statusMap[trackingStatus] || 'ACTIVE';
 
@@ -169,7 +168,7 @@ export class RequestsService {
     const activeAssignments = await this.prisma.visitRequest.findMany({
       where: {
         guardId: { not: null },
-        status: { in: ['APPROVED', 'ACTIVE'] },
+        status: { in: ['APPROVED', 'ACTIVE', 'DEPARTED', 'AT_HOSPITAL'] },
       },
       select: { guardId: true },
     });
@@ -214,7 +213,7 @@ export class RequestsService {
     const activeAssignment = await this.prisma.visitRequest.findFirst({
       where: {
         guardId: id,
-        status: { in: ['APPROVED', 'ACTIVE'] },
+        status: { in: ['APPROVED', 'ACTIVE', 'DEPARTED', 'AT_HOSPITAL'] },
       },
     });
     if (activeAssignment) {
@@ -307,7 +306,7 @@ export class RequestsService {
           ? 'Auto-approved (Emergency)'
           : null,
       approvedAt:
-        r.status === 'APPROVED' || r.status === 'COMPLETED' || r.status === 'ACTIVE'
+        ['APPROVED', 'COMPLETED', 'ACTIVE', 'DEPARTED', 'AT_HOSPITAL'].includes(r.status)
           ? r.updatedAt?.toISOString()
           : null,
       rejectionReason: null,
@@ -323,7 +322,8 @@ export class RequestsService {
   private getTrackingStatus(r: any): string | null {
     if (r.status === 'PENDING' || r.status === 'REJECTED') return null;
     if (r.status === 'COMPLETED') return 'completed';
-    if (r.status === 'ACTIVE') return 'at_hospital';
+    if (r.status === 'AT_HOSPITAL' || r.status === 'ACTIVE') return 'at_hospital';
+    if (r.status === 'DEPARTED') return 'departed';
     if (r.status === 'APPROVED') return 'preparing';
     if (r.status === 'ESCALATED') return 'preparing';
     return null;

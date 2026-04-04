@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FiClock, FiCheckCircle, FiXCircle, FiAlertTriangle, FiPlusCircle } from 'react-icons/fi';
 
 export default function MyRequestsPage() {
-  const { myRequests } = useData();
+  const { myRequests, updateTrackingStatus } = useData();
 
   const statusIcon = {
     pending: <FiClock />,
@@ -110,8 +110,8 @@ export default function MyRequestsPage() {
                   <div className="tracking-progress">
                     <span className="tracking-label">Visit Status:</span>
                     <div className="tracking-steps">
-                      {['preparing', 'departed', 'at_hospital', 'returning', 'completed'].map((step, idx) => {
-                        const steps = ['preparing', 'departed', 'at_hospital', 'returning', 'completed'];
+                      {['preparing', 'departed', 'at_hospital', 'completed'].map((step, idx) => {
+                        const steps = ['preparing', 'departed', 'at_hospital', 'completed'];
                         const currentIdx = steps.indexOf(req.trackingStatus);
                         const isActive = idx <= currentIdx;
                         return (
@@ -123,6 +123,16 @@ export default function MyRequestsPage() {
                       })}
                     </div>
                   </div>
+                )}
+
+                {req.trackingStatus === 'at_hospital' && (
+                  <button
+                    className="btn-primary"
+                    style={{ marginTop: '1rem', width: '100%', padding: '0.6rem', fontSize: '0.9rem' }}
+                    onClick={() => updateTrackingStatus(req.id, 'completed')}
+                  >
+                    Complete Visit
+                  </button>
                 )}
 
                 {req.status === 'completed' && !req.feedbackGiven && (

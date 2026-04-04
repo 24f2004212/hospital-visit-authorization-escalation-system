@@ -1,0 +1,24 @@
+﻿M  backend/package-lock.json
+M  backend/package.json
+ M backend/prisma/dev.db
+M  backend/prisma/schema.prisma
+M  backend/src/auth/auth.controller.ts
+M  backend/src/auth/auth.service.ts
+M  backend/src/auth/jwt.strategy.ts
+D  backend/src/prisma.service.ts
+M  backend/src/prisma/prisma.service.ts
+M  backend/src/requests/sms.service.ts
+M  backend/tsconfig.json
+M  frontend/package-lock.json
+M  frontend/package.json
+M  frontend/src/components/Sidebar.jsx
+M  frontend/src/index.css
+M  frontend/src/main.jsx
+M  frontend/src/pages/NewRequestPage.jsx
+M  frontend/src/pages/RegisterPage.jsx
+?? backend/scripts/
+?? frontend/dev_err.txt
+?? frontend/src/pages/StaffManagementPage.jsx
+?? git_status.txt
+?? status_output.txt
+?? status_output2.txt
