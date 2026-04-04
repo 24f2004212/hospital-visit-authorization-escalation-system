@@ -39,7 +39,14 @@ export function AuthProvider({ children }) {
         parentPhone: parentPhone || '',
       });
 
-      const { access_token, user: userData } = res.data;
+      const data = res.data;
+
+      // If staff registration is pending approval, don't log in
+      if (data.pendingApproval) {
+        return { pendingApproval: true, message: data.message };
+      }
+
+      const { access_token, user: userData } = data;
       localStorage.setItem(TOKEN_KEY, access_token);
       localStorage.setItem(SESSION_KEY, JSON.stringify(userData));
       setUser(userData);

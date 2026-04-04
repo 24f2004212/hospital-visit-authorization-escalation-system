@@ -1,0 +1,47 @@
+export const nearbyHospitals = [
+  {
+    id: 1,
+    name: "OneHealth Super Speciality Hospital",
+    location: "Vandalur (GST Road)",
+    distance: "Near VIT Chennai",
+    contact: ["+91 93846 35305"],
+    type: "Super Speciality",
+    is24x7: true,
+  },
+  {
+    id: 2,
+    name: "Annai Arul Hospital",
+    location: "Mudichur Road, Old Perungalathur",
+    distance: "Near VIT Chennai",
+    contact: ["+91 93602 60915"],
+    type: "Multispeciality",
+    is24x7: true,
+  },
+  {
+    id: 3,
+    name: "Kathir Memorial Hospital",
+    location: "Melakottaiyur",
+    distance: "Near VIT Chennai",
+    contact: ["+91 94892 30883"],
+    type: "General Hospital",
+    is24x7: false,
+  },
+  {
+    id: 4,
+    name: "VIT Chennai Health Centre",
+    location: "On-Campus (Near Academic Block 2)",
+    distance: "0 km",
+    contact: ["+91 93458 48758"],
+    type: "First Aid & Basic Care",
+    is24x7: true,
+  },
+  {
+    id: 5,
+    name: "Emergency Ambulance Service (TN)",
+    location: "All over Tamil Nadu",
+    distance: "N/A",
+    contact: ["108"],
+    type: "Emergency Services",
+    is24x7: true,
+  }
+];

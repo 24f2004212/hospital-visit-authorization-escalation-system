@@ -1,9 +1,26 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { SmsService } from './sms.service';
+import { EmailService } from './email.service';
 
 @Injectable()
 export class RequestsService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(RequestsService.name);
+
+  // The fallback emergency hospitals as requested
+  private readonly emergencyHospitals = [
+    { name: 'OneHealth Super Speciality Hospital', phone: '+919384635305' },
+    { name: 'Annai Arul Hospital', phone: '+919360260915' },
+    { name: 'Kathir Memorial Hospital', phone: '+919489230883' },
+    { name: 'VIT Chennai Health Centre', phone: '+919345848758' },
+  ];
+
+  constructor(
+    private prisma: PrismaService,
+    private smsService: SmsService,
+    private emailService: EmailService,
+  ) {}
 
   async findAll() {
     const requests = await this.prisma.visitRequest.findMany({
@@ -40,18 +57,31 @@ export class RequestsService {
       data: {
         studentId: data.studentId,
         reason: data.reason,
+        // @ts-ignore
         description: data.description || '',
         urgency: data.urgency === 'emergency' ? 'EMERGENCY' : 'NORMAL',
         status: isEmergency ? 'APPROVED' : 'PENDING',
+        // @ts-ignore
         preferredDate: data.preferredDate || '',
+        // @ts-ignore
         preferredTime: data.preferredTime || '',
+        // @ts-ignore
         hospitalName: data.hospitalName || '',
+        // @ts-ignore
         proctorEmail: data.proctorEmail || '',
+        // @ts-ignore
         parentEmail: data.parentEmail || '',
+        // @ts-ignore
         parentPhone: data.parentPhone || '',
       },
       include: { student: true, warden: true, guard: true, escalations: true, feedbacks: true },
     });
+
+    if (isEmergency) {
+      // Immediately notify parents and proctor upon filing an emergency!
+      this.logger.warn(`Emergency Request ${request.id} filed! Sending immediate alerts...`);
+      await this.dispatchEmergencyAlerts(request, 'An AUTO-APPROVED EMERGENCY request was filed');
+    }
 
     return this.formatRequest(request);
   }
@@ -151,6 +181,47 @@ export class RequestsService {
       phone: g.phoneNumber || '',
       status: assignedGuardIds.has(g.id) ? 'assigned' : 'available',
     }));
+  }
+
+  // ---- Guard Management (Warden/Admin only) ----
+  async createGuard(name: string, phone: string) {
+    const bcrypt = await import('bcrypt');
+    const dummyPassword = await bcrypt.hash('guard-no-login-' + Date.now(), 10);
+    const guard = await this.prisma.user.create({
+      data: {
+        email: `guard-${Date.now()}@caresync.internal`,
+        password: dummyPassword,
+        name,
+        role: 'GUARD',
+        phoneNumber: phone,
+        isApproved: true,
+      },
+    });
+    return {
+      id: guard.id,
+      name: guard.name,
+      phone: guard.phoneNumber || '',
+      status: 'available',
+    };
+  }
+
+  async removeGuard(id: string) {
+    // Ensure the user is a guard and not currently assigned to an active request
+    const guard = await this.prisma.user.findUnique({ where: { id } });
+    if (!guard || guard.role !== 'GUARD') {
+      throw new Error('Guard not found');
+    }
+    const activeAssignment = await this.prisma.visitRequest.findFirst({
+      where: {
+        guardId: id,
+        status: { in: ['APPROVED', 'ACTIVE'] },
+      },
+    });
+    if (activeAssignment) {
+      throw new Error('Cannot remove a guard who is currently assigned to an active visit');
+    }
+    await this.prisma.user.delete({ where: { id } });
+    return { message: `Guard ${guard.name} has been removed.` };
   }
 
   // ---- Feedback ----
@@ -254,5 +325,56 @@ export class RequestsService {
     if (r.status === 'APPROVED') return 'preparing';
     if (r.status === 'ESCALATED') return 'preparing';
     return null;
+  }
+
+  // ---- CRON JOB FOR ESCALATION ----
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleEmergencyEscalations() {
+    this.logger.debug('Checking for delayed emergency requests...');
+    
+    // Find requests that are PENDING for more than 3 minutes
+    const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
+    
+    const delayedRequests = await this.prisma.visitRequest.findMany({
+      where: {
+        status: 'PENDING',
+        createdAt: {
+          lt: threeMinutesAgo,
+        },
+      },
+      include: { student: true },
+    });
+
+    for (const request of delayedRequests) {
+      this.logger.warn(`Request ${request.id} delayed by > 3 mins. Escaping to hospitals!`);
+      
+      // Escalate in DB to update status
+      await this.escalate(request.id, 'SYSTEM_AUTO_CRON');
+
+      // Dispatch Emails & SMS
+      await this.dispatchEmergencyAlerts(request, 'The authorization was delayed, so the system has automatically escalated this');
+    }
+  }
+
+  // ---- SHARED ALERT DISPATCHER ----
+  private async dispatchEmergencyAlerts(req: any, reasonText: string) {
+    const studentName = req.student?.name || 'Unknown Student';
+    const hospitalList = this.emergencyHospitals.map(h => `- ${h.name}: ${h.phone}`).join('\n');
+
+    const targetParentEmail = req.parentEmail || req.student?.parentEmail;
+    if (targetParentEmail) {
+      const parentSubject = `Emergency Alert: Immediate Medical Attention Required for ${studentName}`;
+      const parentBody = `Dear Parent/Guardian,\n\nWe are reaching out to inform you that your child, ${studentName}, has requested emergency medical authorization at VIT Chennai due to: "${req.reason}".\n\n${reasonText} to ensure immediate safety.\n\nHere are the contact details of nearby emergency hospitals:\n${hospitalList}\n\nA warden and guard are being dispatched. Please try to contact your child's mobile or the campus authorities immediately.`;
+      this.logger.log(`Dispatching Parent Alert Email to ${targetParentEmail}`);
+      await this.emailService.sendEmail(targetParentEmail, parentSubject, parentBody);
+    }
+
+    const targetProctorEmail = req.proctorEmail || req.student?.proctorEmail;
+    if (targetProctorEmail) {
+      const proctorSubject = `URGENT ACTION REQUIRED: Emergency Authorization for ${studentName}`;
+      const proctorBody = `Dear Proctor,\n\nYour student, ${studentName}, filed an "EMERGENCY" visit request for "${req.reason}". \n\n${reasonText}. The system has automatically triggered a Fallback Protocol and alerted the parents.\n\nPlease immediately intervene and check the CareSync Dashboard.`;
+      this.logger.log(`Dispatching Proctor Alert Email to ${targetProctorEmail}`);
+      await this.emailService.sendEmail(targetProctorEmail, proctorSubject, proctorBody);
+    }
   }
 }

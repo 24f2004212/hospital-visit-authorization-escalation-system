@@ -3,14 +3,14 @@ import { useAuth } from '../context/AuthContext';
 import {
   FiHome, FiPlusCircle, FiList, FiCheckSquare,
   FiMapPin, FiMessageSquare, FiBarChart2, FiLogOut, FiMenu, FiX,
-  FiAlertTriangle, FiBell, FiUser
+  FiAlertTriangle, FiBell, FiUser, FiUserCheck, FiShield
 } from 'react-icons/fi';
 import { useState } from 'react';
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
-  const isAdmin = ['admin', 'warden', 'proctor', 'guard'].includes(user?.role);
+  const isAdmin = ['admin', 'warden', 'proctor'].includes(user?.role);
 
   const studentLinks = [
     { to: '/dashboard', icon: <FiHome />, label: 'Dashboard' },
@@ -29,6 +29,12 @@ export default function Sidebar() {
     { to: '/escalations', icon: <FiAlertTriangle />, label: 'Escalations' },
     { to: '/analytics', icon: <FiBarChart2 />, label: 'Analytics' },
     { to: '/feedback', icon: <FiMessageSquare />, label: 'Feedback' },
+    ...(user?.role === 'admin'
+      ? [{ to: '/staff-approvals', icon: <FiUserCheck />, label: 'Staff Approvals' }]
+      : []),
+    ...(user?.role === 'warden' || user?.role === 'admin'
+      ? [{ to: '/manage-guards', icon: <FiShield />, label: 'Manage Guards' }]
+      : []),
     { to: '/notifications', icon: <FiBell />, label: 'Notifications' },
     { to: '/profile', icon: <FiUser />, label: 'My Profile' },
   ];
@@ -45,7 +51,6 @@ export default function Sidebar() {
     warden: 'badge-warden',
     proctor: 'badge-proctor',
     admin: 'badge-admin',
-    guard: 'badge-warden',
   };
 
   return (

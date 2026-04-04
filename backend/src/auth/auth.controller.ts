@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body, Get, Patch, Param, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 
@@ -17,6 +17,9 @@ export class AuthController {
       hostelBlock?: string;
       roomNumber?: string;
       contactNumber?: string;
+      proctorEmail?: string;
+      parentEmail?: string;
+      parentPhone?: string;
     },
   ) {
     return this.authService.register(body);
@@ -31,5 +34,34 @@ export class AuthController {
   @Get('profile')
   async getProfile(@Request() req: any) {
     return this.authService.getProfile(req.user.id);
+  }
+
+  // ── Admin-only: Pending Staff Management ──
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('pending-staff')
+  async getPendingStaff(@Request() req: any) {
+    this.assertAdmin(req.user);
+    return this.authService.getPendingStaff();
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('approve-staff/:id')
+  async approveStaff(@Param('id') id: string, @Request() req: any) {
+    this.assertAdmin(req.user);
+    return this.authService.approveStaff(id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('reject-staff/:id')
+  async rejectStaff(@Param('id') id: string, @Request() req: any) {
+    this.assertAdmin(req.user);
+    return this.authService.rejectStaff(id);
+  }
+
+  private assertAdmin(user: any) {
+    if (user?.role !== 'ADMIN') {
+      throw new ForbiddenException('Only administrators can perform this action');
+    }
   }
 }

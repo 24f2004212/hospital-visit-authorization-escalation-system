@@ -19,6 +19,7 @@ model User {
   parentPhone    String?   
   proctorEmail   String?   
   roomNumber     String?   
+  isApproved     Boolean   @default(true)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 

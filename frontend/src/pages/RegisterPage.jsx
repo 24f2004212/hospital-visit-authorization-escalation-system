@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiShield, FiAlertCircle, FiPhone, FiHome, FiHash, FiCheckCircle, FiCheck, FiX } from 'react-icons/fi';
-import { isValidPhoneNumber } from 'libphonenumber-js';
 const COUNTRY_CODES = [
   { code: '+1', name: 'US/CA' }, { code: '+7', name: 'Russia/KZ' }, { code: '+20', name: 'Egypt' }, { code: '+27', name: 'South Africa' },
   { code: '+30', name: 'Greece' }, { code: '+31', name: 'Netherlands' }, { code: '+32', name: 'Belgium' }, { code: '+33', name: 'France' },
@@ -38,7 +37,8 @@ export default function RegisterPage({ onSwitchToLogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const adminRoles = [{ value: 'warden', label: 'Warden' }, { value: 'proctor', label: 'Proctor' }, { value: 'admin', label: 'Admin' }, { value: 'guard', label: 'Guard' }];
+  const [pendingApproval, setPendingApproval] = useState(false);
+  const adminRoles = [{ value: 'warden', label: 'Warden' }, { value: 'proctor', label: 'Proctor' }];
   const [adminRole, setAdminRole] = useState('warden');
 
   const handleChange = (field) => (e) => { 
@@ -68,9 +68,6 @@ export default function RegisterPage({ onSwitchToLogin }) {
     if (!/^\d+$/.test(formData.phoneNumber)) return 'Phone number must contain ONLY numbers without spaces or dots';
     
     const fullContactNumber = `${formData.countryCode}${formData.phoneNumber}`;
-    if (!isValidPhoneNumber(fullContactNumber)) {
-      return 'Please enter a valid phone number with the correct length for the selected country code';
-    }
 
     if (role === 'student') {
       if (!formData.hostelBlock.trim()) return 'Please enter your hostel block';
@@ -81,7 +78,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.proctorEmail)) return 'Invalid proctor email';
       if (!formData.parentPhone.trim()) return 'Parent mobile number is required';
       const fullParentPhone = `${formData.parentCountryCode}${formData.parentPhone}`;
-      if (!isValidPhoneNumber(fullParentPhone)) return 'Invalid parent mobile number';
+      if (formData.parentPhone.length < 5) return 'Invalid parent mobile number';
     }
     return null;
   };
@@ -96,7 +93,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
     setLoading(true);
     try {
       const fullContactNumber = `${formData.countryCode} ${formData.phoneNumber}`;
-      await register({ 
+      const result = await register({ 
         fullName: formData.fullName, 
         email: formData.email, 
         password: formData.password, 
@@ -108,12 +105,44 @@ export default function RegisterPage({ onSwitchToLogin }) {
         parentEmail: formData.parentEmail,
         parentPhone: `${formData.parentCountryCode} ${formData.parentPhone}`
       });
+      // If staff registration needs admin approval
+      if (result?.pendingApproval) {
+        setPendingApproval(true);
+      }
     } catch (err) { 
       setError(err.message || 'Registration failed'); 
     } finally { 
       setLoading(false); 
     }
   };
+
+  // If registration is pending admin approval, show success message
+  if (pendingApproval) {
+    return (
+      <div className="auth-container">
+        <div className="animated-bg"></div>
+        <div className="orb orb-1"></div>
+        <div className="orb orb-2"></div>
+        <div className="auth-card glass-card" style={{ textAlign: 'center' }}>
+          <div className="auth-brand">
+            <div className="auth-brand-logo"><img src="/logo.png" alt="CareSync Logo" /></div>
+            <h1 style={{ fontSize: '1.5rem' }}>✅ Registration Submitted</h1>
+          </div>
+          <div style={{ padding: '1.5rem', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '12px', border: '1px solid rgba(34, 197, 94, 0.2)', margin: '1rem 0' }}>
+            <p style={{ color: '#4ade80', fontWeight: 600, marginBottom: '0.5rem', fontSize: '1rem' }}>Your account is pending admin approval.</p>
+            <p style={{ color: 'var(--neutral-400)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+              You have successfully registered as a <strong style={{ color: 'var(--primary-400)' }}>{adminRole}</strong>. 
+              An administrator will review your registration and approve it. 
+              You will be able to log in once your account is approved.
+            </p>
+          </div>
+          <button className="btn-primary" style={{ marginTop: '1rem' }} onClick={onSwitchToLogin}>
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-container">
@@ -133,7 +162,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
             <FiUser size={15} /> Student
           </button>
           <button type="button" className={`role-toggle-btn ${role === 'admin' ? 'active' : ''}`} onClick={() => { setRole('admin'); setError(''); }}>
-            <FiShield size={15} /> Admin
+            <FiShield size={15} /> Staff
           </button>
         </div>
 
