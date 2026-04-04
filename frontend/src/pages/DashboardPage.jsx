@@ -9,7 +9,7 @@ import {
 export default function DashboardPage() {
   const { user } = useAuth();
   const { stats, myRequests, pendingRequests, activeVisits } = useData();
-  const isAdmin = ['admin', 'warden', 'proctor', 'guard'].includes(user?.role);
+  const isAdmin = ['admin', 'warden', 'proctor'].includes(user?.role);
 
   const studentStats = [
     { icon: <FiClock />, label: 'Pending', value: myRequests.filter(r => r.status === 'pending').length, color: 'var(--warning-500)', bg: 'rgba(245,158,11,0.1)' },

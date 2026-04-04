@@ -14,7 +14,7 @@ export class SmsService {
     this.fromPhone = process.env.TWILIO_PHONE_NUMBER || '+1234567890';
 
     if (accountSid && authToken && accountSid !== 'mock_sid') {
-      this.client = twilio(accountSid, authToken);
+      this.client = new twilio.Twilio(accountSid, authToken);
       this.isMockMode = false;
       this.logger.log('Twilio SMS Client initialized.');
     } else {

@@ -95,6 +95,24 @@ export class RequestsController {
     return this.requestsService.getGuards();
   }
 
+  @UseGuards(AuthGuard('jwt'))
+  @Post('guards')
+  async createGuard(@Request() req: any, @Body() body: { name: string; phone: string }) {
+    if (!['WARDEN', 'ADMIN'].includes(req.user?.role)) {
+      throw new InternalServerErrorException('Only wardens and admins can manage guards');
+    }
+    return this.requestsService.createGuard(body.name, body.phone);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('guards/:id/remove')
+  async removeGuard(@Param('id') id: string, @Request() req: any) {
+    if (!['WARDEN', 'ADMIN'].includes(req.user?.role)) {
+      throw new InternalServerErrorException('Only wardens and admins can manage guards');
+    }
+    return this.requestsService.removeGuard(id);
+  }
+
   // ---- Feedback ----
   @UseGuards(AuthGuard('jwt'))
   @Get('feedback')
