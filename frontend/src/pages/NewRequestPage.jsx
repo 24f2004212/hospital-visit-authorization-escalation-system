@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
+import DatePicker from 'react-datepicker';
+import { format, isAfter, startOfToday } from 'date-fns';
 import {
   FiAlertCircle, FiCalendar, FiClock, FiFileText,
   FiMapPin, FiSend, FiAlertTriangle, FiCheckCircle
@@ -17,13 +19,15 @@ export default function NewRequestPage() {
     reason: '',
     description: '',
     urgency: 'normal',
-    preferredDate: '',
-    preferredTime: '',
+    preferredDate: null,
+    preferredTime: null,
     hospitalName: '',
   });
 
-  const handleChange = (field) => (e) => {
-    setForm(prev => ({ ...prev, [field]: e.target.value }));
+  const handleChange = (field) => (val) => {
+    // If it's a standard event (e.target.value), extract value
+    const value = (val && val.target) ? val.target.value : val;
+    setForm(prev => ({ ...prev, [field]: value }));
     setError('');
   };
 
@@ -35,10 +39,27 @@ export default function NewRequestPage() {
     if (!form.preferredDate) return setError('Please select a date');
     if (!form.preferredTime) return setError('Please select a time');
 
+    // Validation: Check if selected date/time is in the past
+    // The time picker gives us a full date object but we only care about the time relative to the selected date
+    const combinedDate = new Date(form.preferredDate);
+    combinedDate.setHours(form.preferredTime.getHours());
+    combinedDate.setMinutes(form.preferredTime.getMinutes());
+    
+    if (!isAfter(combinedDate, new Date())) {
+      return setError('Invalid date and time selected');
+    }
+
     setLoading(true);
     try {
+      // Format data for backend
+      const submissionData = {
+        ...form,
+        preferredDate: format(form.preferredDate, 'yyyy-MM-dd'),
+        preferredTime: format(form.preferredTime, 'HH:mm'),
+      };
+
       await new Promise(r => setTimeout(r, 600));
-      const req = await submitRequest(form);
+      const req = await submitRequest(submissionData);
       setSuccess(req);
     } catch (err) {
       console.error(err);
@@ -70,7 +91,7 @@ export default function NewRequestPage() {
             <button className="btn-primary" onClick={() => navigate('/my-requests')} style={{ width: 'auto', padding: '0.75rem 2rem' }}>
               View My Requests
             </button>
-            <button className="btn-outline" onClick={() => { setSuccess(null); setForm({ reason: '', description: '', urgency: 'normal', preferredDate: '', preferredTime: '', hospitalName: '' }); }}>
+            <button className="btn-outline" onClick={() => { setSuccess(null); setForm({ reason: '', description: '', urgency: 'normal', preferredDate: null, preferredTime: null, hospitalName: '' }); }}>
               Submit Another
             </button>
           </div>
@@ -180,30 +201,36 @@ export default function NewRequestPage() {
           {/* Date & Time */}
           <div className="form-row">
             <div className="form-group">
-              <label className="form-label" htmlFor="req-date">Preferred Date</label>
-              <div className="input-wrapper">
+              <label className="form-label">Preferred Date</label>
+              <div className="input-wrapper datepicker-input-wrapper">
                 <span className="input-icon"><FiCalendar /></span>
-                <input
-                  id="req-date"
-                  type="date"
-                  className="form-input"
-                  value={form.preferredDate}
+                <DatePicker
+                  selected={form.preferredDate}
                   onChange={handleChange('preferredDate')}
-                  min={new Date().toISOString().split('T')[0]}
+                  minDate={startOfToday()}
+                  dateFormat="yyyy-MM-dd"
+                  className="form-input"
+                  placeholderText="Select date"
+                  todayButton="Today"
                   required
                 />
               </div>
             </div>
             <div className="form-group">
-              <label className="form-label" htmlFor="req-time">Preferred Time</label>
-              <div className="input-wrapper">
+              <label className="form-label">Preferred Time</label>
+              <div className="input-wrapper datepicker-input-wrapper">
                 <span className="input-icon"><FiClock /></span>
-                <input
-                  id="req-time"
-                  type="time"
-                  className="form-input"
-                  value={form.preferredTime}
+                <DatePicker
+                  selected={form.preferredTime}
                   onChange={handleChange('preferredTime')}
+                  showTimeSelect
+                  showTimeSelectOnly
+                  timeIntervals={15}
+                  timeCaption="Time"
+                  dateFormat="HH:mm"
+                  timeFormat="HH:mm"
+                  className="form-input"
+                  placeholderText="Select time"
                   required
                 />
               </div>

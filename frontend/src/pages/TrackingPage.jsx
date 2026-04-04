@@ -7,12 +7,11 @@ export default function TrackingPage() {
   const { requests, activeVisits, guards, updateTrackingStatus, myRequests } = useData();
   const isAdmin = ['admin', 'warden', 'proctor', 'guard'].includes(user?.role);
 
-  const trackingSteps = ['preparing', 'departed', 'at_hospital', 'returning', 'completed'];
+  const trackingSteps = ['preparing', 'departed', 'at_hospital', 'completed'];
   const stepLabels = {
     preparing: '🎒 Preparing',
     departed: '🚶 Departed',
     at_hospital: '🏥 At Hospital',
-    returning: '🔙 Returning',
     completed: '✅ Completed',
   };
 
@@ -30,8 +29,9 @@ export default function TrackingPage() {
   };
 
   const getNextStatus = (current) => {
-    const idx = trackingSteps.indexOf(current);
-    if (idx < trackingSteps.length - 1) return trackingSteps[idx + 1];
+    if (current === 'preparing') return 'at_hospital'; // Proceed to departure sets status to at_hospital immediately
+    if (current === 'departed') return 'at_hospital';
+    if (current === 'at_hospital') return 'completed';
     return null;
   };
 
@@ -118,7 +118,7 @@ export default function TrackingPage() {
                   className="btn-update-status"
                   onClick={() => updateTrackingStatus(visit.id, getNextStatus(visit.trackingStatus))}
                 >
-                  Update to: {stepLabels[getNextStatus(visit.trackingStatus)]}
+                  {visit.trackingStatus === 'preparing' ? 'Proceed to departure' : `Update to: ${stepLabels[getNextStatus(visit.trackingStatus)]}`}
                 </button>
               )}
 

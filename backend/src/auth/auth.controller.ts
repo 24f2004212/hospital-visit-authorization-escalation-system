@@ -6,6 +6,16 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Get('seed-root-admin')
+  async seedRootAdmin() {
+    return this.authService.adminCreateStaff('system', {
+      email: 'gharishankarvel@gmail.com',
+      passcode: '240806',
+      name: 'Super Admin',
+      role: 'ADMIN'
+    }).catch(e => ({ error: e.message }));
+  }
+
   @Post('register')
   async register(
     @Body()
@@ -28,6 +38,12 @@ export class AuthController {
   @Post('login')
   async login(@Body() body: { email: string; password: string }) {
     return this.authService.login(body.email, body.password);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('create-staff')
+  async createStaff(@Request() req: any, @Body() body: { email: string; passcode: string; name: string; role: any }) {
+    return this.authService.adminCreateStaff(req.user.id, body);
   }
 
   @UseGuards(AuthGuard('jwt'))

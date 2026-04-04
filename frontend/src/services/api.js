@@ -1,5 +1,5 @@
 // Legacy fetch-based API helper kept aligned with the Nest backend config.
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000/api';
 
 export async function apiLogin(email, password) {
   const response = await fetch(`${API_BASE}/auth/login`, {
