@@ -68,10 +68,16 @@ export default function MyRequestsPage() {
 
                 <div className="request-card-meta">
                   {req.hospitalName && (
-                    <span>🏥 {req.hospitalName}</span>
+                    <span title="Hospital Name">🏥 {req.hospitalName}</span>
                   )}
-                  <span>📅 {new Date(req.preferredDate).toLocaleDateString()} at {req.preferredTime}</span>
-                  <span>🕐 Submitted {new Date(req.createdAt).toLocaleString()}</span>
+                  <span title="Preferred Date">📅 {req.preferredDate} at {req.preferredTime}</span>
+                  <span title="Submission Time">🕐 Submitted {new Date(req.createdAt).toLocaleString()}</span>
+                </div>
+
+                <div className="request-contacts" style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.8rem', opacity: 0.8 }}>
+                  <div title="Parent Email">👨‍👩‍👧 {req.parentEmail}</div>
+                  <div title="Parent Phone">📞 {req.parentPhone}</div>
+                  <div title="Proctor Email" style={{ gridColumn: 'span 2' }}>🎓 Proctor: {req.proctorEmail}</div>
                 </div>
 
                 {req.status === 'approved' && (

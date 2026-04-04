@@ -1,42 +1,118 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiShield, FiAlertCircle, FiPhone, FiHome, FiHash, FiCheckCircle } from 'react-icons/fi';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiShield, FiAlertCircle, FiPhone, FiHome, FiHash, FiCheckCircle, FiCheck, FiX } from 'react-icons/fi';
+import { isValidPhoneNumber } from 'libphonenumber-js';
+const COUNTRY_CODES = [
+  { code: '+1', name: 'US/CA' }, { code: '+7', name: 'Russia/KZ' }, { code: '+20', name: 'Egypt' }, { code: '+27', name: 'South Africa' },
+  { code: '+30', name: 'Greece' }, { code: '+31', name: 'Netherlands' }, { code: '+32', name: 'Belgium' }, { code: '+33', name: 'France' },
+  { code: '+34', name: 'Spain' }, { code: '+36', name: 'Hungary' }, { code: '+39', name: 'Italy' }, { code: '+40', name: 'Romania' },
+  { code: '+41', name: 'Switzerland' }, { code: '+43', name: 'Austria' }, { code: '+44', name: 'UK' }, { code: '+45', name: 'Denmark' },
+  { code: '+46', name: 'Sweden' }, { code: '+47', name: 'Norway' }, { code: '+48', name: 'Poland' }, { code: '+49', name: 'Germany' },
+  { code: '+51', name: 'Peru' }, { code: '+52', name: 'Mexico' }, { code: '+54', name: 'Argentina' }, { code: '+55', name: 'Brazil' },
+  { code: '+56', name: 'Chile' }, { code: '+57', name: 'Colombia' }, { code: '+58', name: 'Venezuela' }, { code: '+60', name: 'Malaysia' },
+  { code: '+61', name: 'Australia' }, { code: '+62', name: 'Indonesia' }, { code: '+63', name: 'Philippines' }, { code: '+64', name: 'New Zealand' },
+  { code: '+65', name: 'Singapore' }, { code: '+66', name: 'Thailand' }, { code: '+81', name: 'Japan' }, { code: '+82', name: 'South Korea' },
+  { code: '+84', name: 'Vietnam' }, { code: '+86', name: 'China' }, { code: '+90', name: 'Turkey' }, { code: '+91', name: 'India' },
+  { code: '+92', name: 'Pakistan' }, { code: '+93', name: 'Afghanistan' }, { code: '+94', name: 'Sri Lanka' }, { code: '+95', name: 'Myanmar' },
+  { code: '+98', name: 'Iran' }, { code: '+212', name: 'Morocco' }, { code: '+213', name: 'Algeria' }, { code: '+234', name: 'Nigeria' },
+  { code: '+254', name: 'Kenya' }, { code: '+255', name: 'Tanzania' }, { code: '+256', name: 'Uganda' }, { code: '+260', name: 'Zambia' },
+  { code: '+351', name: 'Portugal' }, { code: '+353', name: 'Ireland' }, { code: '+358', name: 'Finland' }, { code: '+380', name: 'Ukraine' },
+  { code: '+420', name: 'Czech Rep' }, { code: '+880', name: 'Bangladesh' }, { code: '+966', name: 'Saudi Arabia' }, { code: '+971', name: 'UAE' },
+  { code: '+972', name: 'Israel' }, { code: '+977', name: 'Nepal' }, { code: '+355', name: 'Albania' }, { code: '+376', name: 'Andorra' },
+  { code: '+244', name: 'Angola' }, { code: '+374', name: 'Armenia' }, { code: '+973', name: 'Bahrain' }, { code: '+375', name: 'Belarus' },
+  { code: '+501', name: 'Belize' }, { code: '+229', name: 'Benin' }, { code: '+975', name: 'Bhutan' }, { code: '+591', name: 'Bolivia' },
+  { code: '+387', name: 'Bosnia' }, { code: '+267', name: 'Botswana' }, { code: '+673', name: 'Brunei' }, { code: '+359', name: 'Bulgaria' },
+  { code: '+226', name: 'Burkina Faso' }, { code: '+257', name: 'Burundi' }, { code: '+855', name: 'Cambodia' }, { code: '+237', name: 'Cameroon' },
+  { code: '+238', name: 'Cape Verde' }, { code: '+236', name: 'CAR' }, { code: '+235', name: 'Chad' }, { code: '+269', name: 'Comoros' },
+  { code: '+506', name: 'Costa Rica' }, { code: '+385', name: 'Croatia' }, { code: '+53', name: 'Cuba' }, { code: '+357', name: 'Cyprus' }
+];
 
 export default function RegisterPage({ onSwitchToLogin }) {
   const { register } = useAuth();
   const [role, setRole] = useState('student');
-  const [formData, setFormData] = useState({ fullName: '', email: '', password: '', confirmPassword: '', hostelBlock: '', roomNumber: '', contactNumber: '' });
+  const [formData, setFormData] = useState({ 
+    fullName: '', email: '', password: '', confirmPassword: '', 
+    hostelBlock: '', roomNumber: '', countryCode: '+91', phoneNumber: '',
+    proctorEmail: '', parentEmail: '', parentCountryCode: '+91', parentPhone: '' 
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const adminRoles = [{ value: 'warden', label: 'Warden' }, { value: 'proctor', label: 'Proctor' }, { value: 'admin', label: 'Admin' }, { value: 'guard', label: 'Guard' }];
   const [adminRole, setAdminRole] = useState('warden');
 
-  const handleChange = (field) => (e) => { setFormData(prev => ({ ...prev, [field]: e.target.value })); setError(''); };
+  const handleChange = (field) => (e) => { 
+    setFormData(prev => ({ ...prev, [field]: e.target.value })); 
+    setError(''); 
+  };
+
+  const pwdCriteria = {
+    length: formData.password.length >= 8,
+    uppercase: /[A-Z]/.test(formData.password),
+    lowercase: /[a-z]/.test(formData.password),
+    special: /[!@#$%^&*(),.?":{}|<>\-_]/.test(formData.password),
+    noStartNumber: formData.password.length > 0 && !/^\d/.test(formData.password)
+  };
+
+  const isPasswordValid = pwdCriteria.length && pwdCriteria.uppercase && pwdCriteria.lowercase && pwdCriteria.special && pwdCriteria.noStartNumber;
 
   const validateForm = () => {
     if (!formData.fullName.trim()) return 'Please enter your full name';
     if (!formData.email.trim()) return 'Please enter your email';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return 'Please enter a valid email';
-    if (formData.password.length < 6) return 'Password must be at least 6 characters';
+    
+    if (!isPasswordValid) return 'Please ensure password meets all security requirements';
     if (formData.password !== formData.confirmPassword) return 'Passwords do not match';
+    
+    if (!formData.phoneNumber.trim()) return 'Phone number is required to create an account';
+    if (!/^\d+$/.test(formData.phoneNumber)) return 'Phone number must contain ONLY numbers without spaces or dots';
+    
+    const fullContactNumber = `${formData.countryCode}${formData.phoneNumber}`;
+    if (!isValidPhoneNumber(fullContactNumber)) {
+      return 'Please enter a valid phone number with the correct length for the selected country code';
+    }
+
     if (role === 'student') {
       if (!formData.hostelBlock.trim()) return 'Please enter your hostel block';
       if (!formData.roomNumber.trim()) return 'Please enter your room number';
+      if (!formData.parentEmail.trim()) return 'Please enter your parent\'s email';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.parentEmail)) return 'Invalid parent email';
+      if (!formData.proctorEmail.trim()) return 'Please enter your proctor\'s email';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.proctorEmail)) return 'Invalid proctor email';
+      if (!formData.parentPhone.trim()) return 'Parent mobile number is required';
+      const fullParentPhone = `${formData.parentCountryCode}${formData.parentPhone}`;
+      if (!isValidPhoneNumber(fullParentPhone)) return 'Invalid parent mobile number';
     }
-    if (!formData.contactNumber.trim()) return 'Please enter your contact number';
     return null;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    
     const v = validateForm();
     if (v) { setError(v); return; }
+    
     setLoading(true);
     try {
-      await register({ fullName: formData.fullName, email: formData.email, password: formData.password, role: role === 'admin' ? adminRole : 'student', hostelBlock: formData.hostelBlock, roomNumber: formData.roomNumber, contactNumber: formData.contactNumber });
-    } catch (err) { setError(err.message || 'Registration failed'); } finally { setLoading(false); }
+      const fullContactNumber = `${formData.countryCode} ${formData.phoneNumber}`;
+      await register({ 
+        fullName: formData.fullName, 
+        email: formData.email, 
+        password: formData.password, 
+        role: role === 'admin' ? adminRole : 'student', 
+        hostelBlock: formData.hostelBlock, 
+        roomNumber: formData.roomNumber, 
+        contactNumber: fullContactNumber,
+        proctorEmail: formData.proctorEmail,
+        parentEmail: formData.parentEmail,
+        parentPhone: `${formData.parentCountryCode} ${formData.parentPhone}`
+      });
+    } catch (err) { 
+      setError(err.message || 'Registration failed'); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   return (
@@ -91,30 +167,101 @@ export default function RegisterPage({ onSwitchToLogin }) {
           )}
 
           {role === 'student' && (
-            <div className="form-group form-fields-enter" style={{ display: 'flex', flexDirection: 'row', gap: '0.75rem' }}>
-              <div style={{ flex: 1 }}>
-                <label className="form-label">Hostel Block</label>
-                <div className="input-wrapper"><span className="input-icon"><FiHome /></span><input type="text" className="form-input" placeholder="Block A" value={formData.hostelBlock} onChange={handleChange('hostelBlock')} required /></div>
+            <>
+              <div className="form-group form-fields-enter" style={{ display: 'flex', flexDirection: 'row', gap: '0.75rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label">Hostel Block</label>
+                  <div className="input-wrapper"><span className="input-icon"><FiHome /></span><input type="text" className="form-input" placeholder="Block A" value={formData.hostelBlock} onChange={handleChange('hostelBlock')} required /></div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label">Room No.</label>
+                  <div className="input-wrapper"><span className="input-icon"><FiHash /></span><input type="text" className="form-input" placeholder="204" value={formData.roomNumber} onChange={handleChange('roomNumber')} required /></div>
+                </div>
               </div>
-              <div style={{ flex: 1 }}>
-                <label className="form-label">Room No.</label>
-                <div className="input-wrapper"><span className="input-icon"><FiHash /></span><input type="text" className="form-input" placeholder="204" value={formData.roomNumber} onChange={handleChange('roomNumber')} required /></div>
+
+              <div className="form-group form-fields-enter">
+                <label className="form-label">Proctor Email Address</label>
+                <div className="input-wrapper">
+                  <span className="input-icon"><FiMail /></span>
+                  <input type="email" className="form-input" placeholder="proctor@hostel.edu" value={formData.proctorEmail} onChange={handleChange('proctorEmail')} required />
+                </div>
               </div>
-            </div>
+
+              <div className="form-group form-fields-enter" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '1.5rem' }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--primary-400)' }}>Parent / Guardian Details</p>
+                
+                <div>
+                  <label className="form-label">Parent Email</label>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><FiMail /></span>
+                    <input type="email" className="form-input" placeholder="parent@example.com" value={formData.parentEmail} onChange={handleChange('parentEmail')} required />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="form-label">Parent Mobile</label>
+                  <div className="input-wrapper" style={{ display: 'flex', gap: '0.5rem' }}>
+                    <select className="form-select" style={{ width: '100px' }} value={formData.parentCountryCode} onChange={handleChange('parentCountryCode')}>
+                      {COUNTRY_CODES.map((c, i) => <option key={i} value={c.code}>{c.code}</option>)}
+                    </select>
+                    <input type="text" className="form-input" placeholder="Mobile Number" value={formData.parentPhone} onChange={handleChange('parentPhone')} required />
+                  </div>
+                </div>
+              </div>
+            </>
           )}
 
           <div className="form-group">
-            <label className="form-label">Contact Number</label>
-            <div className="input-wrapper"><span className="input-icon"><FiPhone /></span><input type="tel" className="form-input" placeholder="+91 98765 43210" value={formData.contactNumber} onChange={handleChange('contactNumber')} required /></div>
+            <label className="form-label">Mobile Number</label>
+            <div className="input-wrapper" style={{ display: 'flex', gap: '0.5rem' }}>
+              <select 
+                className="form-select" 
+                style={{ width: '120px', paddingLeft: '1rem', borderRight: '1px solid rgba(255,255,255,0.1)' }}
+                value={formData.countryCode} 
+                onChange={handleChange('countryCode')}
+              >
+                {COUNTRY_CODES.map((c, i) => (
+                  <option key={i} value={c.code}>{c.code} {c.name}</option>
+                ))}
+              </select>
+              <input 
+                type="text" 
+                className="form-input" 
+                style={{ paddingLeft: '0.75rem' }}
+                placeholder="Only digits (e.g. 9876543210)" 
+                value={formData.phoneNumber} 
+                onChange={handleChange('phoneNumber')} 
+                required 
+              />
+            </div>
           </div>
 
           <div className="form-group">
             <label className="form-label">Password</label>
             <div className="input-wrapper">
               <span className="input-icon"><FiLock /></span>
-              <input type={showPassword ? 'text' : 'password'} className="form-input" placeholder="Min. 6 characters" value={formData.password} onChange={handleChange('password')} required />
+              <input type={showPassword ? 'text' : 'password'} className="form-input" placeholder="Create a strong password" value={formData.password} onChange={handleChange('password')} required />
               <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}>{showPassword ? <FiEyeOff /> : <FiEye />}</button>
             </div>
+            {formData.password.length > 0 && (
+              <div className="password-requirements" style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#aaa', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <div style={{ color: pwdCriteria.length ? '#4ade80' : '#f87171', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  {pwdCriteria.length ? <FiCheck /> : <FiX />} At least 8 characters
+                </div>
+                <div style={{ color: pwdCriteria.uppercase ? '#4ade80' : '#f87171', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  {pwdCriteria.uppercase ? <FiCheck /> : <FiX />} 1 uppercase letter
+                </div>
+                <div style={{ color: pwdCriteria.lowercase ? '#4ade80' : '#f87171', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  {pwdCriteria.lowercase ? <FiCheck /> : <FiX />} 1 lowercase letter
+                </div>
+                <div style={{ color: pwdCriteria.special ? '#4ade80' : '#f87171', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  {pwdCriteria.special ? <FiCheck /> : <FiX />} 1 special character
+                </div>
+                <div style={{ color: pwdCriteria.noStartNumber ? '#4ade80' : '#f87171', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  {pwdCriteria.noStartNumber ? <FiCheck /> : <FiX />} Must not start with a number
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="form-group">
@@ -123,7 +270,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
           </div>
 
           {error && <div className="form-error"><FiAlertCircle size={14} />{error}</div>}
-          <button type="submit" className="btn-primary" disabled={loading}>{loading && <span className="spinner"></span>}{loading ? 'Creating Account...' : 'Create Account'}</button>
+          <button type="submit" className="btn-primary" disabled={loading || (formData.password.length > 0 && !isPasswordValid)}>{loading && <span className="spinner"></span>}{loading ? 'Creating Account...' : 'Create Account'}</button>
         </form>
 
         <div className="auth-divider">or</div>
