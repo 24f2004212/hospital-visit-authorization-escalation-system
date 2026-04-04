@@ -1,7 +1,6 @@
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -13,7 +12,7 @@ model User {
   email          String    @unique
   password       String
   name           String
-  role           String    @default("STUDENT") // STUDENT, WARDEN, GUARD, PROCTOR, PARENT, ADMIN
+  role           String    @default("STUDENT")
   phoneNumber    String?
   parentEmail    String?   
   parentPhone    String?   
@@ -34,16 +33,16 @@ model VisitRequest {
   studentId      String
   wardenId       String?
   guardId        String?
-  status         String      @default("PENDING") // PENDING, APPROVED, REJECTED, ACTIVE, COMPLETED, ESCALATED
+  status         String      @default("PENDING")
   reason         String
-  description    String?     
-  urgency        String      @default("NORMAL") // NORMAL, EMERGENCY
-  preferredDate  String?     
-  preferredTime  String?     
-  hospitalName   String?     
-  proctorEmail   String?     
-  parentEmail    String?     
-  parentPhone    String?     
+  description    String?
+  urgency        String      @default("NORMAL")
+  preferredDate  String?
+  preferredTime  String?
+  hospitalName   String?
+  proctorEmail   String?
+  parentEmail    String?
+  parentPhone    String?
   departureTime  DateTime?
   returnTime     DateTime?
   createdAt      DateTime    @default(now())
@@ -52,7 +51,7 @@ model VisitRequest {
   student        User        @relation("StudentRequests", fields: [studentId], references: [id])
   warden         User?       @relation("WardenApprovals", fields: [wardenId], references: [id])
   guard          User?       @relation("GuardAssignments", fields: [guardId], references: [id])
-  
+
   feedbacks      Feedback[]
   escalations    EscalationLog[]
 }
@@ -61,7 +60,7 @@ model Feedback {
   id             String      @id @default(uuid())
   visitRequestId String
   studentId      String
-  rating         Int         
+  rating         Int
   comments       String?
   createdAt      DateTime    @default(now())
 
@@ -72,7 +71,7 @@ model Feedback {
 model EscalationLog {
   id             String         @id @default(uuid())
   visitRequestId String
-  type           String // DELAYED_APPROVAL, EMERGENCY_ALERT, OVERDUE_RETURN
+  type           String
   acknowledged   Boolean        @default(false)
   createdAt      DateTime       @default(now())
 

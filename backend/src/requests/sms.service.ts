@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as twilio from 'twilio';
+import { Twilio } from 'twilio';
 
 @Injectable()
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
-  private client: twilio.Twilio | null = null;
+  private client: Twilio | null = null;
   private readonly fromPhone: string;
   private readonly isMockMode: boolean;
 
@@ -13,10 +13,16 @@ export class SmsService {
     const authToken = process.env.TWILIO_AUTH_TOKEN;
     this.fromPhone = process.env.TWILIO_PHONE_NUMBER || '+1234567890';
 
-    if (accountSid && authToken && accountSid !== 'mock_sid') {
-      this.client = new twilio.Twilio(accountSid, authToken);
-      this.isMockMode = false;
-      this.logger.log('Twilio SMS Client initialized.');
+    if (accountSid && authToken && accountSid !== 'mock_sid' && accountSid !== 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') {
+      try {
+        this.client = new Twilio(accountSid, authToken);
+        this.isMockMode = false;
+        this.logger.log('Twilio SMS Client initialized.');
+      } catch (err) {
+        this.logger.error(`Twilio initialization failed: ${err.message}`);
+        this.isMockMode = true;
+      }
+
     } else {
       this.isMockMode = true;
       this.logger.warn('Twilio credentials not found. Running SMS Service in MOCK mode.');

@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   FiHome, FiPlusCircle, FiList, FiCheckSquare,
   FiMapPin, FiMessageSquare, FiBarChart2, FiLogOut, FiMenu, FiX,
-  FiAlertTriangle, FiBell, FiUser, FiUserCheck, FiShield
+  FiAlertTriangle, FiBell, FiUser, FiUserCheck, FiShield, FiUserPlus
 } from 'react-icons/fi';
 import { useState } from 'react';
 
@@ -16,7 +16,6 @@ export default function Sidebar() {
     { to: '/dashboard', icon: <FiHome />, label: 'Dashboard' },
     { to: '/new-request', icon: <FiPlusCircle />, label: 'New Request' },
     { to: '/my-requests', icon: <FiList />, label: 'My Requests' },
-    { to: '/tracking', icon: <FiMapPin />, label: 'Visit Tracking' },
     { to: '/feedback', icon: <FiMessageSquare />, label: 'Feedback' },
     { to: '/notifications', icon: <FiBell />, label: 'Notifications' },
     { to: '/profile', icon: <FiUser />, label: 'My Profile' },
@@ -28,6 +27,7 @@ export default function Sidebar() {
     { to: '/tracking', icon: <FiMapPin />, label: 'Live Tracking' },
     { to: '/escalations', icon: <FiAlertTriangle />, label: 'Escalations' },
     { to: '/analytics', icon: <FiBarChart2 />, label: 'Analytics' },
+    { to: '/staff', icon: <FiUserPlus />, label: 'Staff Management' },
     { to: '/feedback', icon: <FiMessageSquare />, label: 'Feedback' },
     ...(user?.role === 'admin'
       ? [{ to: '/staff-approvals', icon: <FiUserCheck />, label: 'Staff Approvals' }]

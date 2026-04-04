@@ -28,7 +28,6 @@ const COUNTRY_CODES = [
 
 export default function RegisterPage({ onSwitchToLogin }) {
   const { register } = useAuth();
-  const [role, setRole] = useState('student');
   const [formData, setFormData] = useState({ 
     fullName: '', email: '', password: '', confirmPassword: '', 
     hostelBlock: '', roomNumber: '', countryCode: '+91', phoneNumber: '',
@@ -40,6 +39,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
   const [pendingApproval, setPendingApproval] = useState(false);
   const adminRoles = [{ value: 'warden', label: 'Warden' }, { value: 'proctor', label: 'Proctor' }];
   const [adminRole, setAdminRole] = useState('warden');
+  const [role, setRole] = useState('student');
 
   const handleChange = (field) => (e) => { 
     setFormData(prev => ({ ...prev, [field]: e.target.value })); 
@@ -65,7 +65,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
     if (formData.password !== formData.confirmPassword) return 'Passwords do not match';
     
     if (!formData.phoneNumber.trim()) return 'Phone number is required to create an account';
-    if (!/^\d+$/.test(formData.phoneNumber)) return 'Phone number must contain ONLY numbers without spaces or dots';
+    if (!/^\d+$/.test(formData.phoneNumber)) return 'Phone number must contain ONLY numbers';
     
     const fullContactNumber = `${formData.countryCode}${formData.phoneNumber}`;
 
@@ -77,11 +77,11 @@ export default function RegisterPage({ onSwitchToLogin }) {
       if (!formData.proctorEmail.trim()) return 'Please enter your proctor\'s email';
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.proctorEmail)) return 'Invalid proctor email';
       if (!formData.parentPhone.trim()) return 'Parent mobile number is required';
-      const fullParentPhone = `${formData.parentCountryCode}${formData.parentPhone}`;
       if (formData.parentPhone.length < 5) return 'Invalid parent mobile number';
     }
     return null;
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -97,7 +97,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
         fullName: formData.fullName, 
         email: formData.email, 
         password: formData.password, 
-        role: role === 'admin' ? adminRole : 'student', 
+        role: role, 
         hostelBlock: formData.hostelBlock, 
         roomNumber: formData.roomNumber, 
         contactNumber: fullContactNumber,
@@ -165,7 +165,6 @@ export default function RegisterPage({ onSwitchToLogin }) {
             <FiShield size={15} /> Staff
           </button>
         </div>
-
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label" htmlFor="reg-fullname">Full Name</label>
@@ -179,66 +178,50 @@ export default function RegisterPage({ onSwitchToLogin }) {
             <label className="form-label" htmlFor="reg-email">Email Address</label>
             <div className="input-wrapper">
               <span className="input-icon"><FiMail /></span>
-              <input id="reg-email" type="email" className="form-input" placeholder={role === 'admin' ? 'admin@hostel.edu' : 'student@hostel.edu'} value={formData.email} onChange={handleChange('email')} required />
+              <input id="reg-email" type="email" className="form-input" placeholder="student@hostel.edu" value={formData.email} onChange={handleChange('email')} required />
             </div>
           </div>
 
-          {role === 'admin' && (
-            <div className="form-group form-fields-enter">
-              <label className="form-label" htmlFor="reg-admin-role">Admin Role</label>
+          <div className="form-group form-fields-enter" style={{ display: 'flex', flexDirection: 'row', gap: '0.75rem' }}>
+            <div style={{ flex: 1 }}>
+              <label className="form-label">Hostel Block</label>
+              <div className="input-wrapper"><span className="input-icon"><FiHome /></span><input type="text" className="form-input" placeholder="Block A" value={formData.hostelBlock} onChange={handleChange('hostelBlock')} required /></div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <label className="form-label">Room No.</label>
+              <div className="input-wrapper"><span className="input-icon"><FiHash /></span><input type="text" className="form-input" placeholder="204" value={formData.roomNumber} onChange={handleChange('roomNumber')} required /></div>
+            </div>
+          </div>
+
+          <div className="form-group form-fields-enter">
+            <label className="form-label">Proctor Email Address</label>
+            <div className="input-wrapper">
+              <span className="input-icon"><FiMail /></span>
+              <input type="email" className="form-input" placeholder="proctor@hostel.edu" value={formData.proctorEmail} onChange={handleChange('proctorEmail')} required />
+            </div>
+          </div>
+
+          <div className="form-group form-fields-enter" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '1.5rem' }}>
+            <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--primary-400)' }}>Parent / Guardian Details</p>
+            
+            <div>
+              <label className="form-label">Parent Email</label>
               <div className="input-wrapper">
-                <span className="input-icon"><FiShield /></span>
-                <select id="reg-admin-role" className="form-select" value={adminRole} onChange={(e) => setAdminRole(e.target.value)}>
-                  {adminRoles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                </select>
+                <span className="input-icon"><FiMail /></span>
+                <input type="email" className="form-input" placeholder="parent@example.com" value={formData.parentEmail} onChange={handleChange('parentEmail')} required />
               </div>
             </div>
-          )}
 
-          {role === 'student' && (
-            <>
-              <div className="form-group form-fields-enter" style={{ display: 'flex', flexDirection: 'row', gap: '0.75rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label className="form-label">Hostel Block</label>
-                  <div className="input-wrapper"><span className="input-icon"><FiHome /></span><input type="text" className="form-input" placeholder="Block A" value={formData.hostelBlock} onChange={handleChange('hostelBlock')} required /></div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label className="form-label">Room No.</label>
-                  <div className="input-wrapper"><span className="input-icon"><FiHash /></span><input type="text" className="form-input" placeholder="204" value={formData.roomNumber} onChange={handleChange('roomNumber')} required /></div>
-                </div>
+            <div>
+              <label className="form-label">Parent Mobile</label>
+              <div className="input-wrapper" style={{ display: 'flex', gap: '0.5rem' }}>
+                <select className="form-select" style={{ width: '100px' }} value={formData.parentCountryCode} onChange={handleChange('parentCountryCode')}>
+                  {COUNTRY_CODES.map((c, i) => <option key={i} value={c.code}>{c.code}</option>)}
+                </select>
+                <input type="text" className="form-input" placeholder="Mobile Number" value={formData.parentPhone} onChange={handleChange('parentPhone')} required />
               </div>
-
-              <div className="form-group form-fields-enter">
-                <label className="form-label">Proctor Email Address</label>
-                <div className="input-wrapper">
-                  <span className="input-icon"><FiMail /></span>
-                  <input type="email" className="form-input" placeholder="proctor@hostel.edu" value={formData.proctorEmail} onChange={handleChange('proctorEmail')} required />
-                </div>
-              </div>
-
-              <div className="form-group form-fields-enter" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '1.5rem' }}>
-                <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--primary-400)' }}>Parent / Guardian Details</p>
-                
-                <div>
-                  <label className="form-label">Parent Email</label>
-                  <div className="input-wrapper">
-                    <span className="input-icon"><FiMail /></span>
-                    <input type="email" className="form-input" placeholder="parent@example.com" value={formData.parentEmail} onChange={handleChange('parentEmail')} required />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="form-label">Parent Mobile</label>
-                  <div className="input-wrapper" style={{ display: 'flex', gap: '0.5rem' }}>
-                    <select className="form-select" style={{ width: '100px' }} value={formData.parentCountryCode} onChange={handleChange('parentCountryCode')}>
-                      {COUNTRY_CODES.map((c, i) => <option key={i} value={c.code}>{c.code}</option>)}
-                    </select>
-                    <input type="text" className="form-input" placeholder="Mobile Number" value={formData.parentPhone} onChange={handleChange('parentPhone')} required />
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
+            </div>
+          </div>
 
           <div className="form-group">
             <label className="form-label">Mobile Number</label>
@@ -257,7 +240,7 @@ export default function RegisterPage({ onSwitchToLogin }) {
                 type="text" 
                 className="form-input" 
                 style={{ paddingLeft: '0.75rem' }}
-                placeholder="Only digits (e.g. 9876543210)" 
+                placeholder="Only digits" 
                 value={formData.phoneNumber} 
                 onChange={handleChange('phoneNumber')} 
                 required 
@@ -272,34 +255,15 @@ export default function RegisterPage({ onSwitchToLogin }) {
               <input type={showPassword ? 'text' : 'password'} className="form-input" placeholder="Create a strong password" value={formData.password} onChange={handleChange('password')} required />
               <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}>{showPassword ? <FiEyeOff /> : <FiEye />}</button>
             </div>
-            {formData.password.length > 0 && (
-              <div className="password-requirements" style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#aaa', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <div style={{ color: pwdCriteria.length ? '#4ade80' : '#f87171', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  {pwdCriteria.length ? <FiCheck /> : <FiX />} At least 8 characters
-                </div>
-                <div style={{ color: pwdCriteria.uppercase ? '#4ade80' : '#f87171', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  {pwdCriteria.uppercase ? <FiCheck /> : <FiX />} 1 uppercase letter
-                </div>
-                <div style={{ color: pwdCriteria.lowercase ? '#4ade80' : '#f87171', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  {pwdCriteria.lowercase ? <FiCheck /> : <FiX />} 1 lowercase letter
-                </div>
-                <div style={{ color: pwdCriteria.special ? '#4ade80' : '#f87171', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  {pwdCriteria.special ? <FiCheck /> : <FiX />} 1 special character
-                </div>
-                <div style={{ color: pwdCriteria.noStartNumber ? '#4ade80' : '#f87171', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  {pwdCriteria.noStartNumber ? <FiCheck /> : <FiX />} Must not start with a number
-                </div>
-              </div>
-            )}
           </div>
 
           <div className="form-group">
             <label className="form-label">Confirm Password</label>
-            <div className="input-wrapper"><span className="input-icon"><FiCheckCircle /></span><input type={showPassword ? 'text' : 'password'} className="form-input" placeholder="Re-enter your password" value={formData.confirmPassword} onChange={handleChange('confirmPassword')} required /></div>
+            <div className="input-wrapper"><span className="input-icon"><FiCheckCircle /></span><input type={showPassword ? 'text' : 'password'} className="form-input" placeholder="Re-enter password" value={formData.confirmPassword} onChange={handleChange('confirmPassword')} required /></div>
           </div>
 
           {error && <div className="form-error"><FiAlertCircle size={14} />{error}</div>}
-          <button type="submit" className="btn-primary" disabled={loading || (formData.password.length > 0 && !isPasswordValid)}>{loading && <span className="spinner"></span>}{loading ? 'Creating Account...' : 'Create Account'}</button>
+          <button type="submit" className="btn-primary" disabled={loading}>{loading ? 'Creating...' : 'Create Account'}</button>
         </form>
 
         <div className="auth-divider">or</div>

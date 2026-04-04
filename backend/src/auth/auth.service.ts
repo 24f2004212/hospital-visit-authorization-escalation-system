@@ -5,10 +5,13 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
+  private prisma: any;
   constructor(
-    private prisma: PrismaService,
-    private jwtService: JwtService,
-  ) {}
+    prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {
+    this.prisma = prisma;
+  }
 
   async register(data: {
     email: string;
@@ -41,7 +44,7 @@ export class AuthService {
     const needsApproval = ['WARDEN', 'PROCTOR'].includes(normalizedRole);
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    const user = await this.prisma.user.create({
+    const user = await this.prisma['user'].create({
       data: {
         email: data.email,
         password: hashedPassword,
@@ -80,7 +83,6 @@ export class AuthService {
         email: user.email,
         fullName: user.name,
         role: user.role.toLowerCase(),
-        hostelBlock: '',
         roomNumber: user.roomNumber || '',
         contactNumber: user.phoneNumber || '',
       },
@@ -126,6 +128,51 @@ export class AuthService {
     };
   }
 
+  async adminCreateStaff(adminId: string, data: {
+    email: string;
+    passcode: string;
+    name: string;
+    role: 'ADMIN' | 'WARDEN' | 'GUARD' | 'PROCTOR';
+  }) {
+    // Check if requester is an admin
+    if (adminId !== 'system') {
+      const admin = await this.prisma['user'].findUnique({ where: { id: adminId } });
+      if (!admin || admin.role !== 'ADMIN') {
+        throw new UnauthorizedException('Only administrators can create staff accounts.');
+      }
+    }
+
+    const existing = await this.prisma['user'].findUnique({ where: { email: data.email } });
+    if (existing) {
+      throw new ConflictException('Staff account with this email already exists.');
+    }
+
+    // Passcode should be exactly 6 digits
+    if (!/^\d{6}$/.test(data.passcode)) {
+      throw new ConflictException('Passcode must be exactly 6 digits.');
+    }
+
+    const hashedPassword = await bcrypt.hash(data.passcode, 10);
+    const staff = await this.prisma['user'].create({
+      data: {
+        email: data.email,
+        password: hashedPassword,
+        name: data.name,
+        role: data.role,
+        phoneNumber: '',
+        roomNumber: '',
+        isApproved: true,
+      },
+    });
+
+    return {
+      id: staff.id,
+      email: staff.email,
+      name: staff.name,
+      role: staff.role.toLowerCase(),
+    };
+  }
+
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UnauthorizedException('User not found');
@@ -147,7 +194,7 @@ export class AuthService {
       where: { isApproved: false },
       orderBy: { createdAt: 'desc' },
     });
-    return users.map((u) => ({
+    return users.map((u: any) => ({
       id: u.id,
       email: u.email,
       name: u.name,
