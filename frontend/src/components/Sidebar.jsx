@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   FiHome, FiPlusCircle, FiList, FiCheckSquare,
   FiMapPin, FiMessageSquare, FiBarChart2, FiLogOut, FiMenu, FiX,
-  FiAlertTriangle, FiBell, FiUser, FiUserCheck, FiShield
+  FiAlertTriangle, FiBell, FiUser, FiUserCheck, FiShield, FiClock
 } from 'react-icons/fi';
 import { useState } from 'react';
 
@@ -28,6 +28,7 @@ export default function Sidebar() {
     { to: '/tracking', icon: <FiMapPin />, label: 'Live Tracking' },
     { to: '/escalations', icon: <FiAlertTriangle />, label: 'Escalations' },
     { to: '/analytics', icon: <FiBarChart2 />, label: 'Analytics' },
+    { to: '/history', icon: <FiClock />, label: 'Visit History' },
     { to: '/feedback', icon: <FiMessageSquare />, label: 'Feedback' },
     ...(user?.role === 'admin'
       ? [{ to: '/staff-approvals', icon: <FiUserCheck />, label: 'Staff Approvals' }]

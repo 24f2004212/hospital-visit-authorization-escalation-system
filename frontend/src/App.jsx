@@ -17,6 +17,7 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import ProfilePage from './pages/ProfilePage';
 import NotificationsPage from './pages/NotificationsPage';
 import StaffApprovalsPage from './pages/StaffApprovalsPage';
+import HistoryPage from './pages/HistoryPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -77,6 +78,7 @@ function AppRoutes() {
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="staff-approvals" element={<StaffApprovalsPage />} />
         <Route path="manage-guards" element={<StaffApprovalsPage />} />
+        <Route path="history" element={<HistoryPage />} />
       </Route>
 
       {/* Fallback */}
